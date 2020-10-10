@@ -6,7 +6,7 @@ import (
 )
 
 // attempts to handle all requests passed to requestStream until it is clsoed
-func handleLocalizeRequests(requestStream <-chan LocalizeRequest, freqManager FrequencyManager,
+func handleLocalizeRequests(requestStream <-chan DiscoverRequest, freqManager FrequencyManager,
 	idMap SwarmIDMap, handlerMap SwarmHandlerMap) {
 	for {
 		request, ok := <-requestStream
@@ -23,7 +23,7 @@ func handleLocalizeRequests(requestStream <-chan LocalizeRequest, freqManager Fr
 }
 
 // performs the database lookups to find the handler and attempts to pass the job along
-func sendToSwarmHandler(request LocalizeRequest, idMap SwarmIDMap, handlerMap SwarmHandlerMap) error {
+func sendToSwarmHandler(request DiscoverRequest, idMap SwarmIDMap, handlerMap SwarmHandlerMap) error {
 	swarmID, err := idMap.GetSwarmID(request.GetDataID(), request.GetIPAddress())
 	if err != nil {
 		return fmt.Errorf("Failed to retrieve SwarmID from request info: %v", err)
