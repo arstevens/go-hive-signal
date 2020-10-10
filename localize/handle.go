@@ -6,13 +6,15 @@ import (
 )
 
 // attempts to handle all requests passed to requestStream until it is clsoed
-func handleLocalizeRequests(requestStream <-chan LocalizeRequest, idMap SwarmIDMap, handlerMap SwarmHandlerMap) {
+func handleLocalizeRequests(requestStream <-chan LocalizeRequest, freqManager FrequencyManager,
+	idMap SwarmIDMap, handlerMap SwarmHandlerMap) {
 	for {
 		request, ok := <-requestStream
 		if !ok {
 			log.Println("Localize Request Stream closed for handleLocalizeRequests(). Returning.")
 			return
 		}
+		freqManager.IncrementFrequency(request.GetDataID(), request.GetIPAddress())
 		err := sendToSwarmHandler(request, idMap, handlerMap)
 		if err != nil {
 			log.Printf("Failed to process request in RequestLocalizer: %v\n", err)

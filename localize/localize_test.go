@@ -28,8 +28,9 @@ func TestRequestLocalizer(t *testing.T) {
 
 	idMap := TestSwarmIDMap{ids: ids}
 	handlerMap := TestSwarmHandlerMap{handlers: handlers}
+	freqManager := TestFrequencyManager{}
 
-	localizer, err := NewRequestLocalizer(localizerQueueSize, &idMap, &handlerMap)
+	localizer, err := NewRequestLocalizer(localizerQueueSize, &freqManager, &idMap, &handlerMap)
 	defer localizer.Close()
 
 	for i := 0; i < totalJobs; i++ {
@@ -43,6 +44,12 @@ func TestRequestLocalizer(t *testing.T) {
 		}
 	}
 	time.Sleep(time.Second * 5)
+}
+
+type TestFrequencyManager struct{}
+
+func (fm *TestFrequencyManager) IncrementFrequency(d string, ip net.IP) {
+	fmt.Printf("Frequency Incremented for %s:%v\n", d, ip)
 }
 
 type TestSwarmIDMap struct {
