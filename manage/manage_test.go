@@ -18,6 +18,7 @@ func TestMemberManager(t *testing.T) {
 			origin: fmt.Sprintf("/dataspace/%d", rand.Intn(totalDataspaces)),
 			ip:     net.ParseIP(fmt.Sprintf("192.168.1.%d", rand.Intn(256))),
 			status: rand.Intn(100) < 50,
+			leave:  rand.Intn(100) < 50,
 		}
 	}
 
@@ -45,13 +46,19 @@ func (t *TestTracker) ModifyTrackingData(s string, i net.IP, b bool) error {
 	fmt.Printf("Modifying tracking data for (%s, %v) to status: %t\n", s, i, b)
 	return nil
 }
+func (t *TestTracker) StopTracking(i net.IP) error {
+	fmt.Printf("Done tracking %v\n", i)
+	return nil
+}
 
 type TestRequest struct {
 	origin string
 	ip     net.IP
 	status bool
+	leave  bool
 }
 
 func (r *TestRequest) GetOrigin() string       { return r.origin }
 func (r *TestRequest) GetIPAddress() net.IP    { return r.ip }
 func (r *TestRequest) GetActivityStatus() bool { return r.status }
+func (r *TestRequest) GetIsLeaving() bool      { return r.leave }

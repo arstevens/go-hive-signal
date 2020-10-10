@@ -14,7 +14,7 @@ func handleConnectionRequests(requestStream <-chan ConnectionRequest,
 			log.Println("Connection Request Stream closed for handleConnectionRequests(). Returning.")
 			return
 		}
-		err := verifyAndUpdate(request, verifier, tracker)
+		err := processSingleConnectionRequest(request, verifier, tracker)
 		if err != nil {
 			log.Printf("Failed to process request in MemberManager: %v\n", err)
 		}
@@ -22,11 +22,19 @@ func handleConnectionRequests(requestStream <-chan ConnectionRequest,
 }
 
 // perform the steps required to deal with a ConnectionRequest
-func verifyAndUpdate(request ConnectionRequest, verifier IdentityVerifier,
+func processSingleConnectionRequest(request ConnectionRequest, verifier IdentityVerifier,
 	tracker MemberTracker) error {
-	origin := request.GetOrigin()
 	ipAddr := request.GetIPAddress()
 
+	if request.GetIsLeaving() {
+		err := tracker.StopTracking(ipAddr)
+		if err != nil {
+			return fmt.Errorf("Failed to stop tracking using MemberTracker: %v", err)
+		}
+		return nil
+	}
+
+	origin := request.GetOrigin()
 	err := verifier.Verify(origin, ipAddr)
 	if err != nil {
 		return fmt.Errorf("Failed to verify request using IdentityVerifier: %v", err)

@@ -11,4 +11,5 @@ type ConnectionRequest interface {
 	GetOrigin() string
 	GetIPAddress() net.IP
 	GetActivityStatus() bool
+	GetIsLeaving() bool
 }
