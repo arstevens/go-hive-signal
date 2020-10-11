@@ -46,6 +46,14 @@ func (t *TestAllocator) AllocateToSwarm(interface{}) error {
 	fmt.Printf("Allocating new request to swarm\n")
 	return nil
 }
+func (t *TestAllocator) AllocateToJob(interface{}) error {
+	fmt.Printf("Allocating new request to job\n")
+	return nil
+}
+func (t *TestAllocator) RemoveFromSwarm(interface{}) error {
+	fmt.Printf("Removing request from swarm\n")
+	return nil
+}
 
 type TestRequest struct {
 	origin string
@@ -54,7 +62,7 @@ type TestRequest struct {
 	leave  bool
 }
 
-func (r *TestRequest) GetOrigin() string       { return r.origin }
-func (r *TestRequest) GetIPAddress() net.IP    { return r.ip }
-func (r *TestRequest) GetActivityStatus() bool { return r.status }
-func (r *TestRequest) GetIsLeaving() bool      { return r.leave }
+func (r *TestRequest) GetOrigin() string    { return r.origin }
+func (r *TestRequest) GetIPAddress() net.IP { return r.ip }
+func (r *TestRequest) GetIsNew() bool       { return r.status }
+func (r *TestRequest) GetIsLeaving() bool   { return r.leave }

@@ -10,4 +10,6 @@ network*/
 type ConnectionRequest interface {
 	GetOrigin() string
 	GetIPAddress() net.IP
+	GetIsLeaving() bool
+	GetIsNew() bool
 }

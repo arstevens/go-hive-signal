@@ -31,9 +31,16 @@ func processSingleConnectionRequest(request ConnectionRequest, verifier Identity
 	if err != nil {
 		return fmt.Errorf("Failed to verify request using IdentityVerifier: %v", err)
 	}
-	err = allocator.AllocateToSwarm(request)
+
+	if request.GetIsLeaving() {
+		err = allocator.RemoveFromSwarm(request)
+	} else if request.GetIsNew() {
+		err = allocator.AllocateToSwarm(request)
+	} else {
+		err = allocator.AllocateToJob(request)
+	}
 	if err != nil {
-		return fmt.Errorf("Failed to allocate to swarm using MemberAllocator: %v", err)
+		return fmt.Errorf("Failed to allocate to request using MemberAllocator: %v", err)
 	}
 	return nil
 }
