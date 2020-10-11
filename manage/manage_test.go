@@ -23,8 +23,8 @@ func TestMemberManager(t *testing.T) {
 	}
 
 	verifier := TestVerifier{}
-	tracker := TestTracker{}
-	handler, _ := NewMemberManager(queueSize, &verifier, &tracker)
+	allocator := TestAllocator{}
+	handler, _ := NewMemberManager(queueSize, &verifier, &allocator)
 	defer handler.Close()
 
 	for i := 0; i < totalJobs; i++ {
@@ -40,14 +40,10 @@ func (v *TestVerifier) Verify(s string, i net.IP) error {
 	return nil
 }
 
-type TestTracker struct{}
+type TestAllocator struct{}
 
-func (t *TestTracker) ModifyTrackingData(s string, i net.IP, b bool) error {
-	fmt.Printf("Modifying tracking data for (%s, %v) to status: %t\n", s, i, b)
-	return nil
-}
-func (t *TestTracker) StopTracking(i net.IP) error {
-	fmt.Printf("Done tracking %v\n", i)
+func (t *TestAllocator) AllocateToSwarm(interface{}) error {
+	fmt.Printf("Allocating new request to swarm\n")
 	return nil
 }
 

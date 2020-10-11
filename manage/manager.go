@@ -11,9 +11,9 @@ type MemberManager struct {
 /*NewMemberManager creates a new instance of MemberManager with the
 provided verifier and tracker and a queue of size queueSize*/
 func NewMemberManager(queueSize int, verifier IdentityVerifier,
-	tracker MemberTracker) (*MemberManager, error) {
+	allocator MemberAllocator) (*MemberManager, error) {
 	requestStream := make(chan ConnectionRequest, queueSize)
-	go handleConnectionRequests(requestStream, verifier, tracker)
+	go handleConnectionRequests(requestStream, verifier, allocator)
 	return &MemberManager{
 		requestQueue: requestStream,
 	}, nil
