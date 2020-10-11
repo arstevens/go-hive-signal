@@ -13,9 +13,9 @@ type RequestLocalizer struct {
 /*NewRequestLocalizer returns a new *RequestLocalizer with a queue of
 size queueSize and with the provided SwarmIDMap and SwarmHandlerMap*/
 func NewRequestLocalizer(queueSize int, freqManager FrequencyManager,
-	idMap SwarmIDMap, handlerMap SwarmHandlerMap) (*RequestLocalizer, error) {
+	handlerMap SwarmMap) (*RequestLocalizer, error) {
 	requestStream := make(chan DiscoverRequest, queueSize)
-	go handleLocalizeRequests(requestStream, freqManager, idMap, handlerMap)
+	go handleLocalizeRequests(requestStream, freqManager, handlerMap)
 	return &RequestLocalizer{
 		requestQueue: requestStream,
 	}, nil

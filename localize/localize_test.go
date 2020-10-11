@@ -18,25 +18,24 @@ func TestRequestLocalizer(t *testing.T) {
 	localizerQueueSize := 10
 	totalJobs := 100
 
-	ids := make([]SwarmID, swarmCount)
-	handlers := make(map[SwarmID]handle.RequestHandler)
+	handlers := make(map[string]handle.RequestHandler)
+	ids := make([]string, swarmCount)
 	for i := 0; i < swarmCount; i++ {
-		randID := rand.Intn(swarmIDLimit)
-		ids[i] = randID
+		ids[i] = fmt.Sprintf("%d", rand.Intn(swarmIDLimit))
+		randID := ids[i]
 		handlers[randID] = &TestHandler{capacity: handlerCapacity}
 	}
 
-	idMap := TestSwarmIDMap{ids: ids}
 	handlerMap := TestSwarmHandlerMap{handlers: handlers}
 	freqManager := TestFrequencyManager{}
 
-	localizer, err := NewRequestLocalizer(localizerQueueSize, &freqManager, &idMap, &handlerMap)
+	localizer, err := NewRequestLocalizer(localizerQueueSize, &freqManager, &handlerMap)
 	defer localizer.Close()
 
 	for i := 0; i < totalJobs; i++ {
 		job := TestLocalizeRequest{
 			ip:     net.ParseIP("192.168.1.1"),
-			dataID: "randID",
+			dataID: ids[rand.Intn(len(ids))],
 		}
 		err = localizer.AddJob(&job)
 		if err != nil {
@@ -48,8 +47,8 @@ func TestRequestLocalizer(t *testing.T) {
 
 type TestFrequencyManager struct{}
 
-func (fm *TestFrequencyManager) IncrementFrequency(d string, ip net.IP) {
-	fmt.Printf("Frequency Incremented for %s:%v\n", d, ip)
+func (fm *TestFrequencyManager) IncrementFrequency(d string) {
+	fmt.Printf("Frequency Incremented for %s\n", d)
 }
 
 type TestSwarmIDMap struct {
@@ -61,10 +60,10 @@ func (sm *TestSwarmIDMap) GetSwarmID(string, net.IP) (SwarmID, error) {
 }
 
 type TestSwarmHandlerMap struct {
-	handlers map[SwarmID]handle.RequestHandler
+	handlers map[string]handle.RequestHandler
 }
 
-func (sh *TestSwarmHandlerMap) GetSwarmHandler(id SwarmID) (handle.RequestHandler, error) {
+func (sh *TestSwarmHandlerMap) GetSwarmHandler(id string) (handle.RequestHandler, error) {
 	handler, ok := sh.handlers[id]
 	if !ok {
 		return nil, fmt.Errorf("Invalid swarm id")
