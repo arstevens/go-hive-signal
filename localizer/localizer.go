@@ -25,7 +25,7 @@ func New(size int, managers SwarmMap, tracker FrequencyTracker) *RequestLocalize
 
 //AddJob adds a request and connection to the queue for processing
 func (rl *RequestLocalizer) AddJob(request interface{}, conn handle.Conn) error {
-	rl.requestStream <- handle.RequestPair{request, conn}
+	rl.requestStream <- handle.RequestPair{Request: request, Conn: conn}
 	return nil
 }
 
