@@ -7,7 +7,7 @@ import (
 	"github.com/arstevens/go-request/handle"
 )
 
-/*DataspaceHandler is an object that can handle requests that add a dataspace to
+/*RegistrationHandler is an object that can handle requests that add a dataspace to
 the set of all supported dataspaces for a signaling server*/
 type RegistrationHandler struct {
 	closed        bool
@@ -32,19 +32,19 @@ func (rh *RegistrationHandler) AddJob(request interface{}, conn handle.Conn) err
 	return nil
 }
 
-/*JobCapacity returns the max number of jobs a DatabaseHandler can hold
+/*JobCapacity returns the max number of jobs a RegistrationHandler can hold
 in its job queue*/
 func (rh *RegistrationHandler) JobCapacity() int {
 	return cap(rh.requestStream)
 }
 
-/*QueuedJobs returns the number of jobs currently queued in a DataspaceHandlers
+/*QueuedJobs returns the number of jobs currently queued in a RegistrationHandler
 job queue */
 func (rh *RegistrationHandler) QueuedJobs() int {
 	return len(rh.requestStream)
 }
 
-/*Close closes a DataspaceHandler for work and returns an error if the
+/*Close closes a RegistrationHandler for work and returns an error if the
 Handler is already closed*/
 func (rh *RegistrationHandler) Close() error {
 	if !rh.closed {
