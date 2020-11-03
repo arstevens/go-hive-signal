@@ -14,7 +14,8 @@ type SwarmManager interface {
 /*SwarmMap defines an object that can return the SwarmManager assigned
 to a specific dataspace*/
 type SwarmMap interface {
-	GetSwarmByDataspace(dataspace string) (SwarmManager, error)
+	GetSwarmID(string) (string, error)
+	GetSwarmManager(string) (SwarmManager, error)
 }
 
 /*FrequencyTracker defines an object that needs to be informed when a new request

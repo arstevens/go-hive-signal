@@ -24,32 +24,32 @@ func New(size int, swarmMap SwarmMap, originReg OriginRegistrator) *Registration
 }
 
 //AddJob adds a request to the job queue. AddJob hangs if the job queue is full
-func (dh *RegistrationHandler) AddJob(request interface{}, conn handle.Conn) error {
-	if dh.closed {
-		return fmt.Errorf("Cannot add a job on a closed DataspaceHandler")
+func (rh *RegistrationHandler) AddJob(request interface{}, conn handle.Conn) error {
+	if rh.closed {
+		return fmt.Errorf("Cannot add a job on a closed RegistrationHandler")
 	}
-	dh.requestStream <- handle.RequestPair{Request: request, Conn: conn}
+	rh.requestStream <- handle.RequestPair{Request: request, Conn: conn}
 	return nil
 }
 
 /*JobCapacity returns the max number of jobs a DatabaseHandler can hold
 in its job queue*/
-func (dh *RegistrationHandler) JobCapacity() int {
-	return cap(dh.requestStream)
+func (rh *RegistrationHandler) JobCapacity() int {
+	return cap(rh.requestStream)
 }
 
 /*QueuedJobs returns the number of jobs currently queued in a DataspaceHandlers
 job queue */
-func (dh *RegistrationHandler) QueuedJobs() int {
-	return len(dh.requestStream)
+func (rh *RegistrationHandler) QueuedJobs() int {
+	return len(rh.requestStream)
 }
 
 /*Close closes a DataspaceHandler for work and returns an error if the
 Handler is already closed*/
-func (dh *RegistrationHandler) Close() error {
-	if !dh.closed {
-		dh.closed = true
-		close(dh.requestStream)
+func (rh *RegistrationHandler) Close() error {
+	if !rh.closed {
+		rh.closed = true
+		close(rh.requestStream)
 		return nil
 	}
 	return fmt.Errorf("Cannot close a closed DataspaceHandler")

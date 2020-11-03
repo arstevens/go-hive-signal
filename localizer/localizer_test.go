@@ -31,7 +31,9 @@ func TestLocalizer(t *testing.T) {
 	queueSize := 3
 	rlocalizer := New(queueSize, &smap, &ftrack)
 	for _, request := range requests {
-		rlocalizer.AddJob(&request, &fconn)
+		rlocalizer.AddJob(&LocalizeRequestTest{
+			d: request.GetDataspace(),
+		}, &fconn)
 	}
 	time.Sleep(time.Second)
 }
@@ -46,12 +48,21 @@ type SwarmMapTest struct {
 	smap map[string]SwarmManager
 }
 
-func (st *SwarmMapTest) GetSwarmByDataspace(d string) (SwarmManager, error) {
+func (st *SwarmMapTest) GetSwarmID(d string) (string, error) {
 	sm, ok := st.smap[d]
 	if !ok {
-		return nil, fmt.Errorf("No swarm manager of name %s", d)
+		return "", fmt.Errorf("No swarm associated with name %s", d)
 	}
-	return sm, nil
+	return sm.GetID(), nil
+}
+
+func (st *SwarmMapTest) GetSwarmManager(s string) (SwarmManager, error) {
+	for _, manager := range st.smap {
+		if manager.GetID() == s {
+			return manager, nil
+		}
+	}
+	return nil, fmt.Errorf("No swarm with name %s", s)
 }
 
 type SwarmManagerTest struct {
