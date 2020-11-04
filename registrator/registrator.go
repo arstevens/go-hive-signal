@@ -1,4 +1,4 @@
-package register
+package registrator
 
 import (
 	"fmt"

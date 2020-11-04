@@ -1,4 +1,4 @@
-package register
+package registrator
 
 /*OriginRegistrator describes a datastore that keeps track of
 which valid 'points of origin' for endpoints to come from */
