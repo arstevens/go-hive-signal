@@ -7,11 +7,14 @@ import (
 	"github.com/arstevens/go-request/handle"
 )
 
+/*ConnectionHandler verifies swarm connect requests and then
+passes them to a SwarmConnector*/
 type ConnectionHandler struct {
 	closed        bool
 	requestStream chan<- handle.RequestPair
 }
 
+//New creates a new instance of ConnectionHandler
 func New(size int, verifier IdentityVerifier, connector SwarmConnector) *ConnectionHandler {
 	requestStream := make(chan handle.RequestPair, size)
 	go processRequestStream(requestStream, verifier, connector)

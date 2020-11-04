@@ -14,6 +14,7 @@ type RegistrationHandler struct {
 	requestStream chan<- handle.RequestPair
 }
 
+//New creates a new instance of RegistrationHandler
 func New(size int, swarmMap SwarmMap, originReg OriginRegistrator) *RegistrationHandler {
 	requestStream := make(chan handle.RequestPair, size)
 	go processRequestStream(requestStream, swarmMap, originReg)
