@@ -9,7 +9,7 @@ import (
 /*IdentityVerifier takes in information about a request and
 requester and returns whether or not the request is valid*/
 type IdentityVerifier interface {
-	// IP of requester, originID, is a long on request
+	// IP of requester, originID, is a log on request
 	Analyze(net.IP, string, bool) bool
 }
 
