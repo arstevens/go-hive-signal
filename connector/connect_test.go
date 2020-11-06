@@ -22,9 +22,10 @@ func TestConnector(t *testing.T) {
 		requestCode := rand.Intn(10)
 
 		requests[i] = TestConnectionRequest{
-			code:   requestCode,
-			origin: originID,
-			logon:  logon,
+			code:    requestCode,
+			origin:  originID,
+			logon:   logon,
+			swarmID: "",
 		}
 		conns[i] = FakeConn{
 			ip: net.IPv4(byte(rand.Intn(256)), byte(rand.Intn(256)),
@@ -54,20 +55,22 @@ func (tv *TestIdentityVerifier) Analyze(ip net.IP, orig string, logon bool) bool
 
 type TestSwarmConnector struct{}
 
-func (tc *TestSwarmConnector) ProcessConnection(code int, conn handle.Conn) error {
+func (tc *TestSwarmConnector) ProcessConnection(id string, code int, conn handle.Conn) error {
 	fmt.Printf("Adding conn with code(%d) to swarm\n", code)
 	return nil
 }
 
 type TestConnectionRequest struct {
-	code   int
-	origin string
-	logon  bool
+	code    int
+	origin  string
+	logon   bool
+	swarmID string
 }
 
 func (tr *TestConnectionRequest) GetRequestCode() int { return tr.code }
 func (tr *TestConnectionRequest) GetOriginID() string { return tr.origin }
 func (tr *TestConnectionRequest) IsLogOn() bool       { return tr.logon }
+func (tr *TestConnectionRequest) GetSwarmID() string  { return tr.swarmID }
 
 type FakeConn struct {
 	ip net.IP
