@@ -1,0 +1,187 @@
+package transmuter
+
+import (
+	"fmt"
+	"math"
+	"math/rand"
+	"strconv"
+	"testing"
+	"time"
+
+	"github.com/arstevens/go-request/handle"
+)
+
+func TestTransmuterSplitMerge(t *testing.T) {
+	fmt.Println("\n----------STARTING SPLIT/MERGE TEST-------------")
+	totalStartingSwarms := 10
+	totalDspacesPerSwarm := 5
+
+	swarmMap := TestSwarmMap{swarms: make(map[string][]string), idCount: totalStartingSwarms}
+	dspaceCount := 0
+	for i := 0; i < totalStartingSwarms; i++ {
+		id := "/swarm/" + strconv.Itoa(i)
+		dspaces := make([]string, totalDspacesPerSwarm)
+		for j := 0; j < totalDspacesPerSwarm; j++ {
+			dspaces[j] = "/dataspace/" + strconv.Itoa(dspaceCount)
+			dspaceCount++
+		}
+		swarmMap.swarms[id] = dspaces
+	}
+	tracker := TestSizeTracker{sizes: make(map[string]int)}
+	analyzer := TestSwarmAnalyzer{smap: &swarmMap}
+	gateway := TestSwarmGateway{}
+
+	PollPeriod = time.Second
+	_ = New(&tracker, &swarmMap, &analyzer, &gateway)
+	time.Sleep(time.Second * 5)
+}
+
+func TestTransmuterAddRemove(t *testing.T) {
+	fmt.Println("\n----------STARTING ADD/REMOVE TEST-------------")
+	totalRequests := 50
+	totalStartingSwarms := 10
+	totalDspacesPerSwarm := 5
+
+	swarmMap := TestSwarmMap{swarms: make(map[string][]string), idCount: totalStartingSwarms}
+	tracker := TestSizeTracker{sizes: make(map[string]int)}
+	dspaceCount := 0
+	for i := 0; i < totalStartingSwarms; i++ {
+		id := "/swarm/" + strconv.Itoa(i)
+		dspaces := make([]string, totalDspacesPerSwarm)
+		for j := 0; j < totalDspacesPerSwarm; j++ {
+			dspaces[j] = "/dataspace/" + strconv.Itoa(dspaceCount)
+			dspaceCount++
+		}
+		swarmMap.swarms[id] = dspaces
+		tracker.sizes[id] = 0
+	}
+	analyzer := TestSwarmAnalyzer{smap: &swarmMap}
+	gateway := TestSwarmGateway{}
+
+	PollPeriod = time.Hour
+	transmuter := New(&tracker, &swarmMap, &analyzer, &gateway)
+
+	conn := FakeConn{}
+	for i := 0; i < totalRequests; i++ {
+		var id string
+		var code int
+		j, counter := 0, rand.Intn(len(swarmMap.swarms))
+		for sID, _ := range swarmMap.swarms {
+			if j == counter {
+				id = sID
+				break
+			}
+			j++
+		}
+
+		code = SwarmConnect
+		if rand.Intn(100) < 50 {
+			code = SwarmDisconnect
+		}
+		transmuter.ProcessConnection(id, code, &conn)
+	}
+}
+
+type TestSizeTracker struct {
+	sizes map[string]int
+}
+
+func (tt *TestSizeTracker) Increment(id string) {
+	if _, ok := tt.sizes[id]; !ok {
+		tt.sizes[id] = 0
+	}
+	tt.sizes[id]++
+	fmt.Printf("Incremented %s to (%d)\n", id, tt.sizes[id])
+}
+func (tt *TestSizeTracker) Decrement(id string) {
+	if _, ok := tt.sizes[id]; !ok {
+		tt.sizes[id] = 0
+	}
+	if tt.sizes[id] > 0 {
+		tt.sizes[id]--
+	}
+	fmt.Printf("Decremented %s to (%d)\n", id, tt.sizes[id])
+}
+func (tt *TestSizeTracker) GetSmallest() (string, error) {
+	if len(tt.sizes) == 0 {
+		return "", fmt.Errorf("No smallest swarms available in TestSizeTracker")
+	}
+
+	minSize := math.MaxInt32
+	minID := ""
+	for id, size := range tt.sizes {
+		if size < minSize {
+			minSize = size
+			minID = id
+		}
+	}
+	fmt.Printf("Returing smallest swarm %s\n", minID)
+	return minID, nil
+}
+
+type TestSwarmMap struct {
+	swarms  map[string][]string
+	idCount int
+}
+
+func (tm *TestSwarmMap) RemoveSwarm(id string) error {
+	if _, ok := tm.swarms[id]; !ok {
+		return fmt.Errorf("Swarm %s does not exist in RemoveSwarm", id)
+	}
+	delete(tm.swarms, id)
+	return nil
+}
+func (tm *TestSwarmMap) AddSwarm(dspaces []string) (string, error) {
+	id := "/swarm/" + strconv.Itoa(tm.idCount)
+	tm.idCount++
+
+	tm.swarms[id] = dspaces
+	return id, nil
+}
+func (tm *TestSwarmMap) GetDataspaces(id string) ([]string, error) {
+	if _, ok := tm.swarms[id]; !ok {
+		return nil, fmt.Errorf("Swarm %s does not exist in GetDataspaces", id)
+	}
+	return tm.swarms[id], nil
+}
+
+type TestSwarmAnalyzer struct {
+	smap *TestSwarmMap
+}
+
+func (ta *TestSwarmAnalyzer) GetCandidates() ([][]string, error) {
+	candidates := make([][]string, 0)
+	candidate := make([]string, 0)
+	for id, _ := range ta.smap.swarms {
+		if len(candidate) == 2 {
+			candidates = append(candidates, candidate)
+			candidate = make([]string, 0)
+		} else if len(candidate) == 1 && rand.Intn(100) < 50 {
+			candidates = append(candidates, candidate)
+			candidate = make([]string, 0)
+		}
+		candidate = append(candidate, id)
+	}
+	return candidates, nil
+}
+
+type TestSwarmGateway struct{}
+
+func (tg *TestSwarmGateway) AddEndpoint(id string, conn handle.Conn) error {
+	fmt.Printf("(Gateway) Adding endpoint to swarm %s\n", id)
+	return nil
+}
+func (tg *TestSwarmGateway) Bisect(id string, newIDOne string, newIDTwo string) error {
+	fmt.Printf("(Gateway) Bisecting %s into (%s, %s)\n", id, newIDOne, newIDTwo)
+	return nil
+}
+func (tg *TestSwarmGateway) Stitch(idOne string, idTwo string, newID string) error {
+	fmt.Printf("(Gateway) Stitching (%s, %s) into %s\n", idOne, idTwo, newID)
+	return nil
+}
+
+type FakeConn struct{}
+
+func (fc *FakeConn) Read([]byte) (int, error)  { return 0, nil }
+func (fc *FakeConn) Write([]byte) (int, error) { return 0, nil }
+func (fc *FakeConn) Close() error              { return nil }

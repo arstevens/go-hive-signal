@@ -3,6 +3,7 @@ package transmuter
 import (
 	"fmt"
 	"log"
+	"time"
 )
 
 const (
@@ -16,8 +17,11 @@ const (
 	mergeKey
 )
 
+var PollPeriod = time.Second
+
 func pollForTransmutation(swarmMap SwarmMap, gateway SwarmGateway, analyzer SwarmAnalyzer) {
 	for {
+		time.Sleep(PollPeriod)
 		candidates, err := analyzer.GetCandidates()
 		if err != nil {
 			return
@@ -55,6 +59,9 @@ func transmuteSwarms(gateway SwarmGateway, swarms map[int][][]string) error {
 	return nil
 }
 
+/*Edits the swarm map according to the 'candidates' and returns all
+successful split/merges that transmuteSwarms can then use to actually
+stitch/bisect the p2p swarms*/
 func transmuteSwarmMap(swarmMap SwarmMap, candidates [][]string) (map[int][][]string, error) {
 	resultSwarms := map[int][][]string{
 		bisectKey: make([][]string, 0),
