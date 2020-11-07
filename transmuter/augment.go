@@ -88,7 +88,8 @@ func transmuteSwarmMap(swarmMap SwarmMap, candidates []Candidate) (map[int][][]s
 
 func splitSwarmMap(swarmMap SwarmMap, candidate Candidate) (string, string, error) {
 	swarmID := candidate.GetSwarmIDs()[0]
-	dspaceOne, dspaceTwo, err := placeDataspaces(swarmMap, swarmID, candidate.GetPlacements())
+	dspaceOne, dspaceTwo, err := placeDataspaces(swarmMap, swarmID,
+		candidate.GetPlacementOne(), candidate.GetPlacementTwo())
 	if err != nil {
 		return "", "", fmt.Errorf(splitSwarmFailFormat, err)
 	}
@@ -109,7 +110,8 @@ func splitSwarmMap(swarmMap SwarmMap, candidate Candidate) (string, string, erro
 	return swarmIDOne, swarmIDTwo, nil
 }
 
-func placeDataspaces(swarmMap SwarmMap, swarmID string, placements []map[string]bool) ([]string, []string, error) {
+func placeDataspaces(swarmMap SwarmMap, swarmID string, placementOne map[string]bool,
+	placementTwo map[string]bool) ([]string, []string, error) {
 	dataspaces, err := swarmMap.GetDataspaces(swarmID)
 	if err != nil {
 		return nil, nil, fmt.Errorf(splitSwarmFailFormat, err)
@@ -118,9 +120,9 @@ func placeDataspaces(swarmMap SwarmMap, swarmID string, placements []map[string]
 	swarmOne := make([]string, 0)
 	swarmTwo := make([]string, 0)
 	for _, dataspace := range dataspaces {
-		if _, ok := placements[PlacementOne][dataspace]; ok {
+		if _, ok := placementOne[dataspace]; ok {
 			swarmOne = append(swarmOne, dataspace)
-		} else if _, ok := placements[PlacementTwo][dataspace]; ok {
+		} else if _, ok := placementTwo[dataspace]; ok {
 			swarmTwo = append(swarmTwo, dataspace)
 		} else if len(swarmOne) < len(swarmTwo) {
 			swarmOne = append(swarmOne, dataspace)

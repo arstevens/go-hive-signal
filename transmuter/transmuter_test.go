@@ -153,17 +153,18 @@ type TestCandidate struct {
 
 func (tc *TestCandidate) IsSplit() bool                    { return tc.split }
 func (tc *TestCandidate) GetSwarmIDs() []string            { return tc.ids }
-func (tc *TestCandidate) GetPlacements() []map[string]bool { return tc.placements }
+func (tc *TestCandidate) GetPlacementOne() map[string]bool { return tc.placements[0] }
+func (tc *TestCandidate) GetPlacementTwo() map[string]bool { return tc.placements[1] }
 
 func splitStringSlice(s []string) []map[string]bool {
 	placements := make([]map[string]bool, 2)
-	placements[PlacementOne] = make(map[string]bool)
-	placements[PlacementTwo] = make(map[string]bool)
+	placements[0] = make(map[string]bool)
+	placements[1] = make(map[string]bool)
 	for i := 0; i < len(s)/2; i++ {
-		placements[PlacementOne][s[i]] = true
+		placements[0][s[i]] = true
 	}
 	for i := len(s) / 2; i < len(s); i++ {
-		placements[PlacementTwo][s[i]] = true
+		placements[1][s[i]] = true
 	}
 	return placements
 }
