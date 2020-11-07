@@ -62,35 +62,36 @@ func transmuteSwarms(gateway SwarmGateway, swarms map[int][][]string) error {
 /*Edits the swarm map according to the 'candidates' and returns all
 successful split/merges that transmuteSwarms can then use to actually
 stitch/bisect the p2p swarms*/
-func transmuteSwarmMap(swarmMap SwarmMap, candidates [][]string) (map[int][][]string, error) {
+func transmuteSwarmMap(swarmMap SwarmMap, candidates []Candidate) (map[int][][]string, error) {
 	resultSwarms := map[int][][]string{
 		bisectKey: make([][]string, 0),
 		mergeKey:  make([][]string, 0),
 	}
 	for _, candidate := range candidates {
-		if len(candidate) == 1 {
-			idOne, idTwo, err := splitSwarmMap(swarmMap, candidate[0])
+		swarmIDs := candidate.GetSwarmIDs()
+		if candidate.IsSplit() {
+			idOne, idTwo, err := splitSwarmMap(swarmMap, candidate)
 			if err != nil {
 				return resultSwarms, err
 			}
-			resultSwarms[bisectKey] = append(resultSwarms[bisectKey], []string{candidate[0], idOne, idTwo})
-		} else if len(candidate) == 2 {
-			id, err := mergeSwarmMap(swarmMap, candidate[0], candidate[1])
+			resultSwarms[bisectKey] = append(resultSwarms[bisectKey], []string{swarmIDs[0], idOne, idTwo})
+		} else {
+			id, err := mergeSwarmMap(swarmMap, candidate)
 			if err != nil {
 				return resultSwarms, err
 			}
-			resultSwarms[mergeKey] = append(resultSwarms[mergeKey], []string{candidate[0], candidate[1], id})
+			resultSwarms[mergeKey] = append(resultSwarms[mergeKey], []string{swarmIDs[0], swarmIDs[1], id})
 		}
 	}
 	return resultSwarms, nil
 }
 
-func splitSwarmMap(swarmMap SwarmMap, swarmID string) (string, string, error) {
-	dataspaces, err := swarmMap.GetDataspaces(swarmID)
+func splitSwarmMap(swarmMap SwarmMap, candidate Candidate) (string, string, error) {
+	swarmID := candidate.GetSwarmIDs()[0]
+	dspaceOne, dspaceTwo, err := placeDataspaces(swarmMap, swarmID, candidate.GetPlacements())
 	if err != nil {
 		return "", "", fmt.Errorf(splitSwarmFailFormat, err)
 	}
-	dspaceOne, dspaceTwo := splitStringSlice(dataspaces)
 	swarmIDOne, err := swarmMap.AddSwarm(dspaceOne)
 	if err != nil {
 		return "", "", fmt.Errorf(splitSwarmFailFormat, err)
@@ -108,14 +109,32 @@ func splitSwarmMap(swarmMap SwarmMap, swarmID string) (string, string, error) {
 	return swarmIDOne, swarmIDTwo, nil
 }
 
-func splitStringSlice(slice []string) ([]string, []string) {
-	midpoint := len(slice) / 2
-	s1 := slice[:midpoint]
-	s2 := slice[midpoint:]
-	return s1, s2
+func placeDataspaces(swarmMap SwarmMap, swarmID string, placements []map[string]bool) ([]string, []string, error) {
+	dataspaces, err := swarmMap.GetDataspaces(swarmID)
+	if err != nil {
+		return nil, nil, fmt.Errorf(splitSwarmFailFormat, err)
+	}
+
+	swarmOne := make([]string, 0)
+	swarmTwo := make([]string, 0)
+	for _, dataspace := range dataspaces {
+		if _, ok := placements[PlacementOne][dataspace]; ok {
+			swarmOne = append(swarmOne, dataspace)
+		} else if _, ok := placements[PlacementTwo][dataspace]; ok {
+			swarmTwo = append(swarmTwo, dataspace)
+		} else if len(swarmOne) < len(swarmTwo) {
+			swarmOne = append(swarmOne, dataspace)
+		} else {
+			swarmTwo = append(swarmTwo, dataspace)
+		}
+	}
+	return swarmOne, swarmTwo, nil
 }
 
-func mergeSwarmMap(swarmMap SwarmMap, swarmIDOne string, swarmIDTwo string) (string, error) {
+func mergeSwarmMap(swarmMap SwarmMap, candidate Candidate) (string, error) {
+	swarms := candidate.GetSwarmIDs()
+	swarmIDOne, swarmIDTwo := swarms[0], swarms[1]
+
 	dataspacesOne, err := swarmMap.GetDataspaces(swarmIDOne)
 	if err != nil {
 		return "", fmt.Errorf(mergeSwarmFailFormat, err)

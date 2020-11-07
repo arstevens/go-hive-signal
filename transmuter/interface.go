@@ -2,6 +2,11 @@ package transmuter
 
 import "github.com/arstevens/go-request/handle"
 
+const (
+	PlacementOne = 0
+	PlacementTwo
+)
+
 type SwarmSizeTracker interface {
 	GetSmallest() (string, error)
 	Increment(string)
@@ -17,7 +22,13 @@ type SwarmMap interface {
 }
 
 type SwarmAnalyzer interface {
-	GetCandidates() ([][]string, error)
+	GetCandidates() ([]Candidate, error)
+}
+
+type Candidate interface {
+	IsSplit() bool
+	GetSwarmIDs() []string
+	GetPlacements() []map[string]bool
 }
 
 type SwarmGateway interface {

@@ -145,19 +145,44 @@ func (tm *TestSwarmMap) GetDataspaces(id string) ([]string, error) {
 	return tm.swarms[id], nil
 }
 
+type TestCandidate struct {
+	split      bool
+	ids        []string
+	placements []map[string]bool
+}
+
+func (tc *TestCandidate) IsSplit() bool                    { return tc.split }
+func (tc *TestCandidate) GetSwarmIDs() []string            { return tc.ids }
+func (tc *TestCandidate) GetPlacements() []map[string]bool { return tc.placements }
+
+func splitStringSlice(s []string) []map[string]bool {
+	placements := make([]map[string]bool, 2)
+	placements[PlacementOne] = make(map[string]bool)
+	placements[PlacementTwo] = make(map[string]bool)
+	for i := 0; i < len(s)/2; i++ {
+		placements[PlacementOne][s[i]] = true
+	}
+	for i := len(s) / 2; i < len(s); i++ {
+		placements[PlacementTwo][s[i]] = true
+	}
+	return placements
+}
+
 type TestSwarmAnalyzer struct {
 	smap *TestSwarmMap
 }
 
-func (ta *TestSwarmAnalyzer) GetCandidates() ([][]string, error) {
-	candidates := make([][]string, 0)
+func (ta *TestSwarmAnalyzer) GetCandidates() ([]Candidate, error) {
+	candidates := make([]Candidate, 0)
 	candidate := make([]string, 0)
-	for id, _ := range ta.smap.swarms {
+	for id, dataspaces := range ta.smap.swarms {
 		if len(candidate) == 2 {
-			candidates = append(candidates, candidate)
+			finalCandidate := TestCandidate{split: false, ids: candidate, placements: nil}
+			candidates = append(candidates, &finalCandidate)
 			candidate = make([]string, 0)
 		} else if len(candidate) == 1 && rand.Intn(100) < 50 {
-			candidates = append(candidates, candidate)
+			finalCandidate := TestCandidate{split: true, ids: candidate, placements: splitStringSlice(dataspaces)}
+			candidates = append(candidates, &finalCandidate)
 			candidate = make([]string, 0)
 		}
 		candidate = append(candidate, id)
