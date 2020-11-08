@@ -173,7 +173,7 @@ type TestSwarmAnalyzer struct {
 	smap *TestSwarmMap
 }
 
-func (ta *TestSwarmAnalyzer) GetCandidates() ([]Candidate, error) {
+func (ta *TestSwarmAnalyzer) CalculateCandidates() ([]Candidate, error) {
 	candidates := make([]Candidate, 0)
 	candidate := make([]string, 0)
 	for id, dataspaces := range ta.smap.swarms {

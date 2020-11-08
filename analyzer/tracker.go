@@ -2,10 +2,20 @@ package analyzer
 
 import "container/list"
 
+var FrequencyAveragingWidth = 50
+
 type swarmTracker struct {
 	historyLength          int
 	frequencyHistory       *list.List
 	dspaceFrequencyHistory map[string]*list.List
+}
+
+func newTracker() *swarmTracker {
+	return &swarmTracker{
+		historyLength:          FrequencyAveragingWidth,
+		frequencyHistory:       list.New(),
+		dspaceFrequencyHistory: make(map[string]*list.List),
+	}
 }
 
 func (st *swarmTracker) AddFrequencyDatapoint(record int) {

@@ -22,7 +22,7 @@ var PollPeriod = time.Second
 func pollForTransmutation(swarmMap SwarmMap, gateway SwarmGateway, analyzer SwarmAnalyzer) {
 	for {
 		time.Sleep(PollPeriod)
-		candidates, err := analyzer.GetCandidates()
+		candidates, err := analyzer.CalculateCandidates()
 		if err != nil {
 			return
 		}
