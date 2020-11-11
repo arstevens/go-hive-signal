@@ -32,23 +32,25 @@ type DataRequestAnalyzer struct {
 	sizeTracker SwarmSizeTracker
 }
 
-func New() *DataRequestAnalyzer {
+func New(sizeTracker SwarmSizeTracker) *DataRequestAnalyzer {
 	frequencies := make(map[string]map[string]int)
 	trackers := make(map[string]*swarmTracker)
 	fMutex := &sync.RWMutex{}
 	tMutex := &sync.RWMutex{}
 
-	calculateFrequencyOnInterval(frequencies, trackers, fMutex, tMutex)
+	go calculateFrequencyOnInterval(frequencies, trackers, fMutex, tMutex)
 	return &DataRequestAnalyzer{
 		frequencies: frequencies,
 		trackers:    trackers,
 		freqMutex:   fMutex,
 		trackMutex:  tMutex,
+		sizeTracker: sizeTracker,
 	}
 }
 
 func (da *DataRequestAnalyzer) CalculateCandidates() ([]Candidate, error) {
 	candidates := make([]Candidate, 0)
+	da.trackMutex.RLock()
 	fits := calculateSwarmFits(da.trackers, da.sizeTracker)
 	fitList := swarmInfoList{Infos: fits}
 	sort.Sort(&fitList)
@@ -56,15 +58,21 @@ func (da *DataRequestAnalyzer) CalculateCandidates() ([]Candidate, error) {
 	start := 0
 	end := len(fits) - 1
 	for start <= end {
-		if isValidSplit(fits[start].FitScore, fits[start].SwarmSize) {
+		startID, endID := fits[start].SwarmID, fits[end].SwarmID
+		startFit, endFit := fits[start].FitScore, fits[end].FitScore
+		startSize, endSize := fits[start].SwarmSize, fits[end].SwarmSize
+		da.freqMutex.RLock()
+		startDspaceLen, endDspaceLen := len(da.frequencies[startID]), len(da.frequencies[endID])
+		da.freqMutex.RUnlock()
+		if isValidSplit(startFit, startSize, startDspaceLen) {
 			tracker := da.trackers[fits[start].SwarmID]
 			candidate := createSplitCandidate(&fits[start], tracker)
 			candidates = append(candidates, candidate)
-		} else if isValidSplit(fits[end].FitScore, fits[end].SwarmSize) {
+		} else if isValidSplit(endFit, endSize, endDspaceLen) {
 			tracker := da.trackers[fits[end].SwarmID]
 			candidate := createSplitCandidate(&fits[end], tracker)
 			candidates = append(candidates, candidate)
-		} else if start != end && isValidMerge(fits[start].FitScore, fits[end].FitScore) {
+		} else if start != end && isValidMerge(startFit, endFit) {
 			candidate := Candidate{
 				isSplit: false,
 				swarms:  []string{fits[start].SwarmID, fits[end].SwarmID},
@@ -74,15 +82,18 @@ func (da *DataRequestAnalyzer) CalculateCandidates() ([]Candidate, error) {
 		start++
 		end--
 	}
+	da.trackMutex.RUnlock()
 	return candidates, nil
 }
 
 func (da *DataRequestAnalyzer) IncrementFrequencyCounter(swarmID string, dspaceID string) {
+	da.freqMutex.Lock()
 	dataspaces, ok := da.frequencies[swarmID]
 	if !ok {
 		dataspaces = make(map[string]int)
 		da.frequencies[swarmID] = dataspaces
 	}
+	da.freqMutex.Unlock()
 
 	if _, ok := dataspaces[dspaceID]; !ok {
 		dataspaces[dspaceID] = 0
@@ -95,19 +106,32 @@ func calculateFrequencyOnInterval(frequencies map[string]map[string]int, tracker
 	for {
 		time.Sleep(FrequencyCalculationPeriod)
 
+		trackMutex.Lock()
+		freqMutex.Lock()
 		for swarmID, dataspaces := range frequencies {
-			frequency := 0
 			tracker, ok := trackers[swarmID]
 			if !ok {
 				tracker = newTracker()
 				trackers[swarmID] = tracker
 			}
 			for dspaceID, dFreq := range dataspaces {
-				tracker.AddDataspaceFrequencyDatapoint(dspaceID, dFreq)
-				frequency += dFreq
+				tracker.AddFrequencyDatapoint(dspaceID, dFreq)
 				dataspaces[dspaceID] = 0
 			}
-			tracker.AddFrequencyDatapoint(frequency)
+		}
+		cleanup(trackers, frequencies)
+		trackMutex.Unlock()
+		freqMutex.Unlock()
+	}
+}
+
+func cleanup(tmap map[string]*swarmTracker, fmap map[string]map[string]int) {
+	for key, swarm := range tmap {
+		if swarm.CalculateFrequency() == 0 {
+			delete(tmap, key)
+			delete(fmap, key)
+		} else {
+			swarm.Cleanup()
 		}
 	}
 }

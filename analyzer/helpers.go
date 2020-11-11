@@ -1,5 +1,7 @@
 package analyzer
 
+import "sort"
+
 func createSplitCandidate(fit *swarmInfo, tracker *swarmTracker) Candidate {
 	placements := calculateSplitPlacements(tracker.CalculateDataspaceFrequencies())
 	candidate := Candidate{
@@ -11,7 +13,57 @@ func createSplitCandidate(fit *swarmInfo, tracker *swarmTracker) Candidate {
 	return candidate
 }
 
-func calculateSplitPlacements(dspaceFrequencies map[string]int) []map[string]bool
+func calculateSplitPlacements(dspaceFrequencies map[string]int) []map[string]bool {
+	sortedDataspaces := sortDataspacesByFrequency(dspaceFrequencies)
+
+	setOne := make(map[string]bool)
+	setTwo := make(map[string]bool)
+
+	idx := len(sortedDataspaces) - 1
+	cumulativeLoadOne := dspaceFrequencies[sortedDataspaces[idx]]
+	setOne[sortedDataspaces[idx]] = true
+	idx--
+	cumulativeLoadTwo := dspaceFrequencies[sortedDataspaces[idx]]
+	setTwo[sortedDataspaces[idx]] = true
+	idx--
+
+	for idx >= 0 {
+		id := sortedDataspaces[idx]
+		load := dspaceFrequencies[id]
+		if cumulativeLoadOne < cumulativeLoadTwo {
+			setOne[id] = true
+			cumulativeLoadOne += load
+		} else {
+			setTwo[id] = true
+			cumulativeLoadTwo += load
+		}
+	}
+	return []map[string]bool{setOne, setTwo}
+}
+
+func sortDataspacesByFrequency(dspaceFrequencies map[string]int) []string {
+	dataspaces := make([]string, len(dspaceFrequencies))
+	i := 0
+	for key, _ := range dspaceFrequencies {
+		dataspaces[i] = key
+		i++
+	}
+	sort.Sort(&dataspaceFrequencyPair{dataspaces, dspaceFrequencies})
+	return dataspaces
+}
+
+type dataspaceFrequencyPair struct {
+	dataspaces  []string
+	frequencies map[string]int
+}
+
+func (dp *dataspaceFrequencyPair) Len() int { return len(dp.dataspaces) }
+func (dp *dataspaceFrequencyPair) Less(i, j int) bool {
+	return dp.frequencies[dp.dataspaces[i]] < dp.frequencies[dp.dataspaces[i]]
+}
+func (dp *dataspaceFrequencyPair) Swap(i, j int) {
+	dp.dataspaces[i], dp.dataspaces[j] = dp.dataspaces[j], dp.dataspaces[i]
+}
 
 func isValidMerge(fitScoreOne float64, fitScoreTwo float64) bool {
 	distance := 1.0 - (fitScoreOne + fitScoreTwo)
@@ -21,9 +73,12 @@ func isValidMerge(fitScoreOne float64, fitScoreTwo float64) bool {
 	return distance < MergeValidityLimit
 }
 
-func isValidSplit(fitScore float64, swarmSize int) bool {
-	sizeValidity := swarmSize >= SplitSizeLimit
+func isValidSplit(fitScore float64, swarmSize int, totalDspaces int) bool {
+  if totalDspaces < 2 {
+    return false
+  }
 
+	sizeValidity := swarmSize >= SplitSizeLimit
 	if fitScore < 0.5 {
 		fitScore = 1.0 - fitScore
 	}

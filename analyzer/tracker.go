@@ -1,29 +1,30 @@
 package analyzer
 
-import "container/list"
+import (
+	"container/list"
+	"sync"
+)
 
 var FrequencyAveragingWidth = 50
 
 type swarmTracker struct {
 	historyLength          int
 	frequencyHistory       *list.List
+	fHistoryMutex          *sync.Mutex
 	dspaceFrequencyHistory map[string]*list.List
+	dfHistoryMutex         *sync.Mutex
 }
 
 func newTracker() *swarmTracker {
 	return &swarmTracker{
 		historyLength:          FrequencyAveragingWidth,
-		frequencyHistory:       list.New(),
 		dspaceFrequencyHistory: make(map[string]*list.List),
+		dfHistoryMutex:         &sync.Mutex{},
 	}
 }
 
-func (st *swarmTracker) AddFrequencyDatapoint(record int) {
-	st.frequencyHistory.PushBack(record)
-	st.frequencyHistory.Remove(st.frequencyHistory.Front())
-}
-
-func (st *swarmTracker) AddDataspaceFrequencyDatapoint(dspace string, record int) {
+func (st *swarmTracker) AddFrequencyDatapoint(dspace string, record int) {
+	st.dfHistoryMutex.Lock()
 	datapoints := st.dspaceFrequencyHistory[dspace]
 	if datapoints == nil {
 		datapoints = initHistoryQueue(st.historyLength)
@@ -32,25 +33,44 @@ func (st *swarmTracker) AddDataspaceFrequencyDatapoint(dspace string, record int
 
 	datapoints.PushBack(record)
 	datapoints.Remove(datapoints.Front())
+	st.dfHistoryMutex.Unlock()
 }
 
 func initHistoryQueue(size int) *list.List {
 	queue := list.New()
 	for i := 0; i < size; i++ {
-		queue.PushBack(0)
+		queue.PushBack(1)
 	}
 	return queue
 }
 
+func (st *swarmTracker) Cleanup() {
+	dspaceHistory := st.CalculateDataspaceFrequencies()
+	for dspace, freq := range dspaceHistory {
+		if freq <= 0 {
+			st.dfHistoryMutex.Lock()
+			delete(st.dspaceFrequencyHistory, dspace)
+			st.dfHistoryMutex.Unlock()
+		}
+	}
+}
+
 func (st *swarmTracker) CalculateFrequency() int {
-	return averageFrequencies(st.frequencyHistory)
+	dspaceFrequencies := st.CalculateDataspaceFrequencies()
+	frequency := 0
+	for _, freq := range dspaceFrequencies {
+		frequency += freq
+	}
+	return frequency
 }
 
 func (st *swarmTracker) CalculateDataspaceFrequencies() map[string]int {
+	st.dfHistoryMutex.Lock()
 	dspaceFrequencies := make(map[string]int)
 	for dspace, freqList := range st.dspaceFrequencyHistory {
 		dspaceFrequencies[dspace] = averageFrequencies(freqList)
 	}
+	st.dfHistoryMutex.Unlock()
 	return dspaceFrequencies
 }
 
