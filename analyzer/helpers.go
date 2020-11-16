@@ -1,6 +1,8 @@
 package analyzer
 
-import "sort"
+import (
+	"sort"
+)
 
 func createSplitCandidate(fit *swarmInfo, tracker *swarmTracker) Candidate {
 	placements := calculateSplitPlacements(tracker.CalculateDataspaceFrequencies())
@@ -37,6 +39,7 @@ func calculateSplitPlacements(dspaceFrequencies map[string]int) []map[string]boo
 			setTwo[id] = true
 			cumulativeLoadTwo += load
 		}
+		idx--
 	}
 	return []map[string]bool{setOne, setTwo}
 }
@@ -74,9 +77,9 @@ func isValidMerge(fitScoreOne float64, fitScoreTwo float64) bool {
 }
 
 func isValidSplit(fitScore float64, swarmSize int, totalDspaces int) bool {
-  if totalDspaces < 2 {
-    return false
-  }
+	if totalDspaces < 2 {
+		return false
+	}
 
 	sizeValidity := swarmSize >= SplitSizeLimit
 	if fitScore < 0.5 {

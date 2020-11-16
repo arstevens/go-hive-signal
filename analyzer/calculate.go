@@ -61,9 +61,8 @@ func (da *DataRequestAnalyzer) CalculateCandidates() ([]Candidate, error) {
 		startID, endID := fits[start].SwarmID, fits[end].SwarmID
 		startFit, endFit := fits[start].FitScore, fits[end].FitScore
 		startSize, endSize := fits[start].SwarmSize, fits[end].SwarmSize
-		da.freqMutex.RLock()
-		startDspaceLen, endDspaceLen := len(da.frequencies[startID]), len(da.frequencies[endID])
-		da.freqMutex.RUnlock()
+		startDspaceLen := da.trackers[startID].TotalActiveDataspaces()
+		endDspaceLen := da.trackers[endID].TotalActiveDataspaces()
 		if isValidSplit(startFit, startSize, startDspaceLen) {
 			tracker := da.trackers[fits[start].SwarmID]
 			candidate := createSplitCandidate(&fits[start], tracker)

@@ -36,6 +36,13 @@ func (st *swarmTracker) AddFrequencyDatapoint(dspace string, record int) {
 	st.dfHistoryMutex.Unlock()
 }
 
+func (st *swarmTracker) TotalActiveDataspaces() int {
+	st.dfHistoryMutex.Lock()
+	totalActive := len(st.dspaceFrequencyHistory)
+	st.dfHistoryMutex.Unlock()
+	return totalActive
+}
+
 func initHistoryQueue(size int) *list.List {
 	queue := list.New()
 	for i := 0; i < size; i++ {
