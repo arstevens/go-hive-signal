@@ -73,10 +73,11 @@ func handleLocalizeRequest(dataspace string, conn handle.Conn, managers SwarmMap
 		return fmt.Errorf("Failed to get Swarm ID associated with dataspace '%s' in RequestLocalizer: %v", dataspace, err)
 	}
 
-	swarmManager, err := managers.GetSwarmManager(swarmID)
+	swarmManagerObj, err := managers.GetSwarmManager(swarmID)
 	if err != nil {
 		return fmt.Errorf("Failed to get SwarmManager from SwarmMap in RequestLocalizer: %v", err)
 	}
+	swarmManager := swarmManagerObj.(SwarmManager)
 	err = swarmManager.AttemptToPair(conn)
 	if err != nil {
 		return fmt.Errorf("Failed to pair to swarm in RequestLocalizer: %v", err)

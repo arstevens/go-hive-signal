@@ -56,7 +56,7 @@ func (st *SwarmMapTest) GetSwarmID(d string) (string, error) {
 	return sm.GetID(), nil
 }
 
-func (st *SwarmMapTest) GetSwarmManager(s string) (SwarmManager, error) {
+func (st *SwarmMapTest) GetSwarmManager(s string) (interface{}, error) {
 	for _, manager := range st.smap {
 		if manager.GetID() == s {
 			return manager, nil
