@@ -9,7 +9,7 @@ import (
 )
 
 func TestIntegration(t *testing.T) {
-	fmt.Printf("---------------INTEGRATION TEST------------------\n")
+	fmt.Printf("---------------DRA INTEGRATION TEST------------------\n")
 
 	totalSwarms := 20
 	totalDspacesPer := 10
@@ -80,7 +80,7 @@ func TestIntegration(t *testing.T) {
 }
 
 func TestSwarmFit(t *testing.T) {
-	fmt.Printf("---------------FITNESS CALCULATION TEST------------------\n")
+	fmt.Printf("---------------DRA FITNESS CALCULATION TEST------------------\n")
 	totalSwarms := 20
 	totalDspacesPer := 10
 	dpointRange := 100
@@ -131,7 +131,7 @@ func printSwarmInfo(sInfo swarmInfo) {
 }
 
 func TestCandidateCalculation(t *testing.T) {
-	fmt.Printf("---------------CANDIDATE CALCULATION TEST------------------\n")
+	fmt.Printf("---------------DRA CANDIDATE CALCULATION TEST------------------\n")
 	totalSwarms := 20
 	totalDspacesPer := 10
 	dpointRange := 100
@@ -203,7 +203,7 @@ func printCandidate(c Candidate) {
 }
 
 func TestFrequencyCalculation(t *testing.T) {
-	fmt.Printf("---------------FREQUENCY CALCULATION TEST------------------\n")
+	fmt.Printf("---------------DRA FREQUENCY CALCULATION TEST------------------\n")
 	FrequencyCalculationPeriod = time.Millisecond * 10
 	sizeTracker := TestSwarmSizeTracker{sizes: make(map[string]int)}
 	dra := New(&sizeTracker)
@@ -250,7 +250,7 @@ func printTrackers(dra *DataRequestAnalyzer) {
 }
 
 func TestSwarmTracker(t *testing.T) {
-	fmt.Printf("---------------SWARM TRACKER TEST------------------\n")
+	fmt.Printf("---------------DRA SWARM TRACKER TEST------------------\n")
 	FrequencyAveragingWidth = 5
 	tracker := newTracker()
 

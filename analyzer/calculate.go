@@ -16,10 +16,24 @@ used. It is a modifier that changes the way the load/size fit is
 calculated*/
 var IncrementModifier int = 0
 
+/*FrequencyCalculationPeriod sets how often a new frequency data
+point will be calculated and added to the record*/
 var FrequencyCalculationPeriod = time.Minute
 
+/*MergeValidityLimit is the maximum distance from a size/load fit of
+1.0 that a merge candidate can be to be considered valid. Since a score
+closed to 0.0 means a swarm is small and has too much load and 1.0 means
+a swarm is big and has too little load it follows that an optimal sum of
+fit scores should be one since a small swarm with lots of data should be
+paired with a large swarm with little data*/
 var MergeValidityLimit = 0.3
+
+/*SplitSizeLimit is the minimum size of a swarm in order for it to
+be considered eligable for a split*/
 var SplitSizeLimit = 50
+
+/*SplitValidityLimit is the minimum distance from a perfect fit(0.5)
+that a swarm must be in order to be a valid candidate for a split*/
 var SplitValidityLimit = 0.3
 
 type DataRequestAnalyzer struct {
