@@ -24,12 +24,14 @@ const (
 	readStatement   = "SELECT " + fieldName + " FROM " + tableName
 )
 
+//EndpointRegistrationDatabase is a register of all valid Origin IDs
 type EndpointRegistrationDatabase struct {
 	backupDB      *sql.DB
 	databaseMutex *sync.Mutex
 	originSet     map[string]bool
 }
 
+//New creates a new EndpointRegistrationDatabase
 func New() (*EndpointRegistrationDatabase, error) {
 	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s "+
 		"password=%s dbname=%s sslmode=disable",
@@ -56,12 +58,14 @@ func New() (*EndpointRegistrationDatabase, error) {
 	}, nil
 }
 
+//IsRegistered checks if 'originID' is registered
 func (ed *EndpointRegistrationDatabase) IsRegistered(originID string) bool {
 	ed.databaseMutex.Lock()
 	defer ed.databaseMutex.Unlock()
 	return ed.originSet[originID]
 }
 
+//AddOrigin adds 'originID' to the set of registered IDs
 func (ed *EndpointRegistrationDatabase) AddOrigin(originID string) error {
 	ed.databaseMutex.Lock()
 	defer ed.databaseMutex.Unlock()
@@ -80,6 +84,7 @@ func (ed *EndpointRegistrationDatabase) AddOrigin(originID string) error {
 	return nil
 }
 
+//RemoveOrigin removes 'originID' from the set of registered IDs
 func (ed *EndpointRegistrationDatabase) RemoveOrigin(originID string) error {
 	ed.databaseMutex.Lock()
 	defer ed.databaseMutex.Unlock()
@@ -98,6 +103,8 @@ func (ed *EndpointRegistrationDatabase) RemoveOrigin(originID string) error {
 	return nil
 }
 
+/*Close closes the EndpointRegistrationDatabase object. Behaviour of any
+method calls after Close() is called are undefined*/
 func (ed *EndpointRegistrationDatabase) Close() error {
 	ed.databaseMutex.Lock()
 	ed.backupDB.Close()
