@@ -67,12 +67,11 @@ func (sm *SwarmMap) AddSwarm(dataspaces []string) (string, error) {
 	sm.mapMutex.Lock()
 	defer sm.mapMutex.Unlock()
 
-	manager, err := sm.generator.New()
+	newSwarmID := NewSwarmID(sm.idCounter)
+	manager, err := sm.generator.New(newSwarmID)
 	if err != nil {
 		return "", fmt.Errorf("Failed to create new SwarmManager in SwarmMap.AddSwarm(): %v", err)
 	}
-
-	newSwarmID := NewSwarmID(sm.idCounter)
 	sm.idCounter++
 
 	pair := swarmMapPair{Manager: manager.(SwarmManager), Dataspaces: dataspaces}

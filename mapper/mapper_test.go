@@ -93,6 +93,6 @@ func (tm *TestSwarmManager) Close() error {
 
 type TestSwarmManagerGenerator struct{}
 
-func (tg *TestSwarmManagerGenerator) New() (interface{}, error) {
+func (tg *TestSwarmManagerGenerator) New(id string) (interface{}, error) {
 	return &TestSwarmManager{}, nil
 }

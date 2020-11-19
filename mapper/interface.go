@@ -7,5 +7,5 @@ type SwarmManager interface {
 }
 
 type SwarmManagerGenerator interface {
-	New() (interface{}, error)
+	New(string) (interface{}, error)
 }
