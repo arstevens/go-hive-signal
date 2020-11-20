@@ -6,8 +6,6 @@ import (
 	"strconv"
 	"testing"
 	"time"
-
-	"github.com/arstevens/go-request/handle"
 )
 
 func TestLocalizer(t *testing.T) {
@@ -69,7 +67,7 @@ type SwarmManagerTest struct {
 	id string
 }
 
-func (sm *SwarmManagerTest) AttemptToPair(conn handle.Conn) error {
+func (sm *SwarmManagerTest) AttemptToPair(conn interface{}) error {
 	fmt.Printf("%s: Attempting to pair\n", sm.id)
 	return nil
 }

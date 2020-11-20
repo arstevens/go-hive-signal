@@ -1,13 +1,9 @@
 package localizer
 
-import (
-	"github.com/arstevens/go-request/handle"
-)
-
 /*SwarmManager defines an object that can process a request given a dataspace
 and a connection the the requester*/
 type SwarmManager interface {
-	AttemptToPair(conn handle.Conn) error
+	AttemptToPair(conn interface{}) error
 	GetID() string
 }
 
