@@ -31,9 +31,13 @@ func (sm *SwarmManager) AttemptToPair(conn interface{}) error {
 	if !ok {
 		return fmt.Errorf("Failed to pair in SwarmManager.AttemptToPair(). 'conn' does not conform to Conn interface")
 	}
-	offererConn, err := sm.gateway.GetEndpoint(sm.id)
+	offerer, err := sm.gateway.GetEndpoint(sm.id)
 	if err != nil {
 		return fmt.Errorf("Failed to pair in SwarmManager.AttemptToPair(): %v", err)
+	}
+	offererConn, ok := offerer.(Conn)
+	if !ok {
+		return fmt.Errorf("Failed to pair in SwarmManager.AttemptToPair(). offerer 'conn' does not conform to Conn interface")
 	}
 
 	err = sm.negotiate(offererConn, acceptorConn)

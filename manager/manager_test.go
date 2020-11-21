@@ -49,7 +49,7 @@ func (sg *testSwarmGateway) GetEndpoint(string) (interface{}, error) {
 	return sg.conn, nil
 }
 
-func negotiate(interface{}, interface{}) error {
+func negotiate(Conn, Conn) error {
 	return nil
 }
 
