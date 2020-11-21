@@ -19,16 +19,16 @@ func RoundtripLimitedNegotiate(offerer manager.Conn, acceptor manager.Conn) erro
 	defer offerer.Close()
 	defer acceptor.Close()
 	for i := 0; i < RoundtripLimit; i++ {
-		rawOffer, err := readMessageFromConn(offerer)
+		rawOffer, err := readMessageFromWire(offerer)
 		if err != nil {
 			return fmt.Errorf(readErrorString, err)
 		}
-		_, err = acceptor.Write(rawOffer)
+		err = writeMessageToWire(acceptor, rawOffer)
 		if err != nil {
 			return fmt.Errorf(writeErrorString, err)
 		}
 
-		rawResponse, err := readMessageFromConn(acceptor)
+		rawResponse, err := readMessageFromWire(acceptor)
 		if err != nil {
 			return fmt.Errorf(readErrorString, err)
 		}
@@ -38,7 +38,7 @@ func RoundtripLimitedNegotiate(offerer manager.Conn, acceptor manager.Conn) erro
 		}
 		message := ifaceMsg.(NegotiateMessage)
 
-		_, err = offerer.Write(rawResponse)
+		err = writeMessageToWire(offerer, rawResponse)
 		if err != nil {
 			return fmt.Errorf(writeErrorString, err)
 		}
@@ -49,7 +49,22 @@ func RoundtripLimitedNegotiate(offerer manager.Conn, acceptor manager.Conn) erro
 	return fmt.Errorf("Roundtrip limit reached without consensus in RountripLimitedNegotiate()")
 }
 
-func readMessageFromConn(conn io.Reader) ([]byte, error) {
+func writeMessageToWire(conn io.Writer, msg []byte) error {
+	var size uint64
+	size = uint64(len(msg))
+	err := binary.Write(conn, HeaderEndian, size)
+	if err != nil {
+		return fmt.Errorf("Failed to write header to connection: %v", err)
+	}
+
+	_, err = conn.Write(msg)
+	if err != nil {
+		return fmt.Errorf("Failed to write message to connection: %v", err)
+	}
+	return nil
+}
+
+func readMessageFromWire(conn io.Reader) ([]byte, error) {
 	var size uint64
 	err := binary.Read(conn, HeaderEndian, &size)
 	if err != nil {

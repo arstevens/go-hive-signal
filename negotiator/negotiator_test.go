@@ -15,7 +15,7 @@ func TestRountripLimitNegotiate(t *testing.T) {
 	offerer := FakeConn{buf: make([]byte, BufSize), head: 0, tail: 0}
 	acceptor := FakeConn{buf: make([]byte, BufSize), head: 0, tail: 0}
 
-	numberOfTrips := 6
+	numberOfTrips := 5
 	writeNOffers(&offerer, numberOfTrips)
 	writeNResponses(&acceptor, numberOfTrips)
 
@@ -71,7 +71,7 @@ func TestMessageRead(t *testing.T) {
 	}
 	conn.Write(msg)
 
-	resp, err := readMessageFromConn(&conn)
+	resp, err := readMessageFromWire(&conn)
 	if err != nil {
 		panic(err)
 	}
