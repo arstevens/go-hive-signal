@@ -1,0 +1,27 @@
+syntax = "proto3";
+package protomsg;
+
+message LocalizeRequest {
+  int32 type = 1;
+  string dataspace = 2;
+}
+
+message RegistrationRequest {
+  int32 type = 1;
+  bool isAdd = 2;
+  bool isOrigin = 3;
+  string datafield = 4;
+}
+
+message ConnectionRequest {
+  int32 type = 1;
+  int32 requestCode = 2;
+  bool isLogOn = 3;
+  string swarmID = 4;
+  string originID = 5;
+}
+
+message NegotiateMessage {
+  bool isAccepted = 1;
+  //Extra fields that will be used by negotiating parties
+}
