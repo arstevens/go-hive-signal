@@ -1,4 +1,4 @@
-package endpoint
+package register
 
 import (
 	"database/sql"

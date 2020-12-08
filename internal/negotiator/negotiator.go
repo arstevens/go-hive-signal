@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/arstevens/go-hive-signal/manager"
+	"github.com/arstevens/go-hive-signal/internal/manager"
 )
 
 var RoundtripLimit = 5
