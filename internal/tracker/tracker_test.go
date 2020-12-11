@@ -36,11 +36,17 @@ func TestTracker(t *testing.T) {
 	for i := 0; i < totalIncs; i++ {
 		time.Sleep(augPollTime)
 		swarmID := swarms[rand.Intn(len(swarms))]
-		tracker.Increment(swarmID)
+		s := tracker.GetSize(swarmID)
+		tracker.SetSize(swarmID, s+1)
 	}
 	for i := 0; i < totalDecs; i++ {
 		time.Sleep(augPollTime)
 		swarmID := swarms[rand.Intn(len(swarms))]
-		tracker.Decrement(swarmID)
+		s := tracker.GetSize(swarmID)
+		if s == 0 {
+			fmt.Printf("Cannot decrement. Already at 0.\n")
+		} else {
+			tracker.SetSize(swarmID, s-1)
+		}
 	}
 }

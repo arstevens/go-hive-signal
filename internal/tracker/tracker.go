@@ -31,25 +31,9 @@ func (st *SwarmSizeTracker) GetSize(swarmID string) int {
 	return 0
 }
 
-//Increment increments the size of 'swarmID' by one
-func (st *SwarmSizeTracker) Increment(swarmID string) {
+func (st *SwarmSizeTracker) SetSize(swarmID string, size int) {
 	st.mapMutex.Lock()
-	if _, ok := st.trackMap[swarmID]; !ok {
-		st.trackMap[swarmID] = 0
-	}
-	st.trackMap[swarmID]++
-	st.mapMutex.Unlock()
-}
-
-//Decrement decrements the size of 'swarmID' by one
-func (st *SwarmSizeTracker) Decrement(swarmID string) {
-	st.mapMutex.Lock()
-	size, ok := st.trackMap[swarmID]
-	if !ok {
-		st.trackMap[swarmID] = 0
-	} else if size > 0 {
-		st.trackMap[swarmID]--
-	}
+	st.trackMap[swarmID] = size
 	st.mapMutex.Unlock()
 }
 
