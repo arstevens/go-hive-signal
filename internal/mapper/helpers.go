@@ -1,9 +1,13 @@
 package mapper
 
-import "math"
+import (
+	"math"
+
+	"github.com/arstevens/go-hive-signal/internal/transmuter"
+)
 
 type swarmMapPair struct {
-	Manager    SwarmManager
+	Manager    transmuter.SwarmManager
 	Dataspaces []string
 }
 

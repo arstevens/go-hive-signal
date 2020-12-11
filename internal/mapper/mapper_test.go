@@ -6,12 +6,14 @@ import (
 	"strconv"
 	"testing"
 	"time"
+
+	"github.com/arstevens/go-hive-signal/internal/transmuter"
+	"github.com/arstevens/go-request/handle"
 )
 
 func TestMapper(t *testing.T) {
 	NewSwarmID = func(i int) string { return "/swarm/" + strconv.Itoa(i) }
-	generator := TestSwarmManagerGenerator{}
-	swarmMapper := New(&generator)
+	swarmMapper := New()
 
 	// Test Swarm Add
 	totalSwarms := 100
@@ -25,7 +27,7 @@ func TestMapper(t *testing.T) {
 			dspaces[j] = "/dataspace/" + strconv.Itoa(i*totalDspacesPer+j)
 			allDspaces = append(allDspaces, dspaces[j])
 		}
-		_, err := swarmMapper.AddSwarm(dspaces)
+		_, err := swarmMapper.AddSwarm(&TestSwarmManager{}, dspaces)
 		if err != nil {
 			panic(err)
 		}
@@ -90,9 +92,12 @@ type TestSwarmManager struct{}
 func (tm *TestSwarmManager) Close() error {
 	return nil
 }
-
-type TestSwarmManagerGenerator struct{}
-
-func (tg *TestSwarmManagerGenerator) New(id string) (interface{}, error) {
+func (tm *TestSwarmManager) AddEndpoint(handle.Conn) error    { return nil }
+func (tm *TestSwarmManager) RemoveEndpoint(handle.Conn) error { return nil }
+func (tm *TestSwarmManager) Bisect() (transmuter.SwarmManager, error) {
 	return &TestSwarmManager{}, nil
+}
+func (tm *TestSwarmManager) Stitch(man transmuter.SwarmManager) error {
+	man.Close()
+	return nil
 }

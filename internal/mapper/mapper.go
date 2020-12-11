@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"math"
 	"sync"
+
+	"github.com/arstevens/go-hive-signal/internal/transmuter"
 )
 
 //NewSwarmID takes a seed and creates a new swarm id
@@ -15,19 +17,17 @@ type SwarmMap struct {
 	mapMutex              *sync.Mutex
 	managerMap            map[string]*swarmMapPair
 	inverseMap            map[string]string
-	generator             SwarmManagerGenerator
 	idCounter             int
 	minDataspaceSwarmSize int
 	minDataspacesSwarmID  string
 }
 
 //New creates a new instance of SwarmMap
-func New(generator SwarmManagerGenerator) *SwarmMap {
+func New() *SwarmMap {
 	return &SwarmMap{
 		mapMutex:              &sync.Mutex{},
 		managerMap:            make(map[string]*swarmMapPair),
 		inverseMap:            make(map[string]string),
-		generator:             generator,
 		idCounter:             0,
 		minDataspaceSwarmSize: math.MaxInt32,
 		minDataspacesSwarmID:  "",
@@ -63,18 +63,14 @@ func (sm *SwarmMap) RemoveSwarm(swarmID string) error {
 
 /*AddSwarm creates a new swarm with with the 'dataspaces' and returns
 the new swarms ID*/
-func (sm *SwarmMap) AddSwarm(dataspaces []string) (string, error) {
+func (sm *SwarmMap) AddSwarm(manager transmuter.SwarmManager, dataspaces []string) (string, error) {
 	sm.mapMutex.Lock()
 	defer sm.mapMutex.Unlock()
 
 	newSwarmID := NewSwarmID(sm.idCounter)
-	manager, err := sm.generator.New(newSwarmID)
-	if err != nil {
-		return "", fmt.Errorf("Failed to create new SwarmManager in SwarmMap.AddSwarm(): %v", err)
-	}
 	sm.idCounter++
 
-	pair := swarmMapPair{Manager: manager.(SwarmManager), Dataspaces: dataspaces}
+	pair := swarmMapPair{Manager: manager, Dataspaces: dataspaces}
 	sm.managerMap[newSwarmID] = &pair
 	for _, dspace := range dataspaces {
 		sm.inverseMap[dspace] = newSwarmID
