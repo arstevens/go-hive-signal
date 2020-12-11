@@ -2,6 +2,7 @@ package manager
 
 import (
 	"fmt"
+	"sync"
 
 	"github.com/arstevens/go-hive-signal/internal/transmuter"
 )
@@ -11,23 +12,25 @@ var ChangeTriggerLimit int = 20
 /*SwarmManager is an object that can be used to connect new requesters
 to a peer-to-peer swarm*/
 type SwarmManager struct {
-	gateway   SwarmGateway
-	negotiate AgentNegotiator
-	tracker   SwarmSizeTracker
-	closed    bool
-	id        string
-	changes   int
+	gateway     SwarmGateway
+	gatewayLock *sync.Mutex
+	negotiate   AgentNegotiator
+	tracker     SwarmSizeTracker
+	closed      bool
+	id          string
+	changes     int
 }
 
 //New creates a new SwarmManager
 func New(swarmID string, gateway SwarmGateway, negotiate AgentNegotiator, tracker SwarmSizeTracker) *SwarmManager {
 	return &SwarmManager{
-		gateway:   gateway,
-		negotiate: negotiate,
-		tracker:   tracker,
-		closed:    false,
-		id:        swarmID,
-		changes:   0,
+		gateway:     gateway,
+		gatewayLock: &sync.Mutex{},
+		negotiate:   negotiate,
+		tracker:     tracker,
+		closed:      false,
+		id:          swarmID,
+		changes:     0,
 	}
 }
 
@@ -41,7 +44,9 @@ func (sm *SwarmManager) AttemptToPair(conn interface{}) error {
 	if !ok {
 		return fmt.Errorf("Failed to pair in SwarmManager.AttemptToPair(). 'conn' does not conform to Conn interface")
 	}
+	sm.gatewayLock.Lock()
 	offerer, err := sm.gateway.GetEndpoint()
+	sm.gatewayLock.Unlock()
 	if err != nil {
 		return fmt.Errorf("Failed to pair in SwarmManager.AttemptToPair(): %v", err)
 	}
@@ -62,6 +67,8 @@ func (sm *SwarmManager) AddEndpoint(c interface{}) error {
 	if !ok {
 		return fmt.Errorf("Failed to add endpoint in SwarmManager.AddEndpoint(): parameter of wrong type")
 	}
+	sm.gatewayLock.Lock()
+	defer sm.gatewayLock.Unlock()
 	err := sm.gateway.AddEndpoint(conn)
 	if err != nil {
 		return fmt.Errorf("Failed to add endpoint in SwarmManager.AddEndpoint(): %v", err)
@@ -79,6 +86,8 @@ func (sm *SwarmManager) RemoveEndpoint(c interface{}) error {
 	if !ok {
 		return fmt.Errorf("Failed to add endpoint in SwarmManager.RemoveEndpoint(): parameter of wrong type")
 	}
+	sm.gatewayLock.Lock()
+	defer sm.gatewayLock.Unlock()
 	err := sm.gateway.RetireEndpoint(conn)
 	if err != nil {
 		return fmt.Errorf("Failed to add endpoint in SwarmManager.RemoveEndpoint(): %v", err)
@@ -92,6 +101,8 @@ func (sm *SwarmManager) RemoveEndpoint(c interface{}) error {
 }
 
 func (sm *SwarmManager) Bisect() (transmuter.SwarmManager, error) {
+	sm.gatewayLock.Lock()
+	defer sm.gatewayLock.Unlock()
 	newGateway, err := sm.gateway.EvenlySplit()
 	if err != nil {
 		return nil, fmt.Errorf("Failed to bisect in SwarmManager.Bisect(): %v", err)
@@ -106,6 +117,8 @@ func (sm *SwarmManager) Stitch(m transmuter.SwarmManager) error {
 	if !ok {
 		return fmt.Errorf("Failed to stitch in SwarmManager.Stitch(): Wrong parameter type")
 	}
+	sm.gatewayLock.Lock()
+	defer sm.gatewayLock.Unlock()
 	err := sm.gateway.Merge(manager.gateway)
 	if err != nil {
 		return fmt.Errorf("Failed to stitch in SwarmManager.Stitch(): %v", err)
@@ -122,7 +135,9 @@ func (sm *SwarmManager) GetID() string {
 }
 
 func (sm *SwarmManager) SetID(id string) {
+	sm.gatewayLock.Lock()
 	sm.tracker.SetSize(id, sm.gateway.GetTotalEndpoints())
+	sm.gatewayLock.Unlock()
 	sm.id = id
 }
 
