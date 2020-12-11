@@ -1,6 +1,8 @@
 package transmuter
 
-import "github.com/arstevens/go-request/handle"
+import (
+	"io"
+)
 
 /*SwarmSizeTracker describes an object that tracks
 the number of members of each swarm*/
@@ -36,11 +38,10 @@ type Candidate interface {
 }
 
 type SwarmManager interface {
-	AddEndpoint(handle.Conn) error
-	RemoveEndpoint(handle.Conn) error
-	// Parameters New ID 1, New ID 2
+	AddEndpoint(interface{}) error
+	RemoveEndpoint(interface{}) error
 	Bisect() (SwarmManager, error)
-	// Parameters Swarm to merge, New ID
 	Stitch(SwarmManager) error
-	Destroy() error
+	SetID(string)
+	io.Closer
 }

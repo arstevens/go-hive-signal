@@ -50,49 +50,65 @@ func transmuteSwarms(swarmMap SwarmMap, candidates []Candidate) ([]*transmuteRet
 	oldSwarms := make([]string, 0)
 	for _, candidate := range candidates {
 		if candidate.IsSplit() {
-			swarmID := candidate.GetSwarmIDs()[0]
-			manager, err := swarmMap.GetSwarmByID(swarmID)
+			pairOne, pairTwo, err := splitTransmutation(swarmMap, candidate)
 			if err != nil {
-				return nil, nil, fmt.Errorf(transmuteSwarmFailFormat, err)
+				return nil, nil, err
 			}
-			newManager, err := manager.Bisect()
-			if err != nil {
-				return nil, nil, fmt.Errorf(transmuteSwarmFailFormat, err)
-			}
-			dspacesOne, dspacesTwo, err := placeDataspaces(swarmMap, swarmID, candidate.GetPlacementOne(), candidate.GetPlacementTwo())
-			if err != nil {
-				return nil, nil, fmt.Errorf(transmuteSwarmFailFormat, err)
-			}
-			pairOne := transmuteReturnPair{manager: manager, dataspaces: dspacesOne}
-			pairTwo := transmuteReturnPair{manager: newManager, dataspaces: dspacesTwo}
-			newManagers = append(newManagers, &pairOne, &pairTwo)
-			oldSwarms = append(oldSwarms, swarmID)
+			newManagers = append(newManagers, pairOne, pairTwo)
+			oldSwarms = append(oldSwarms, candidate.GetSwarmIDs()[0])
 		} else {
 			swarmIDs := candidate.GetSwarmIDs()
-			managerOne, err := swarmMap.GetSwarmByID(swarmIDs[0])
+			newPair, err := mergeTransmutation(swarmMap, swarmIDs)
 			if err != nil {
-				return nil, nil, fmt.Errorf(transmuteSwarmFailFormat, err)
+				return nil, nil, err
 			}
-			managerTwo, err := swarmMap.GetSwarmByID(swarmIDs[1])
-			if err != nil {
-				return nil, nil, fmt.Errorf(transmuteSwarmFailFormat, err)
-			}
-			err = managerOne.Stitch(managerTwo)
-			if err != nil {
-				return nil, nil, fmt.Errorf(transmuteSwarmFailFormat, err)
-			}
-			managerTwo.Destroy()
-
-			dataspaces, err := consolidateDataspaces(swarmMap, swarmIDs[0], swarmIDs[1])
-			if err != nil {
-				return nil, nil, fmt.Errorf(transmuteSwarmFailFormat, err)
-			}
-			newPair := transmuteReturnPair{manager: managerOne, dataspaces: dataspaces}
-			newManagers = append(newManagers, &newPair)
+			newManagers = append(newManagers, newPair)
 			oldSwarms = append(oldSwarms, swarmIDs...)
 		}
 	}
 	return newManagers, oldSwarms, nil
+}
+
+func mergeTransmutation(swarmMap SwarmMap, swarmIDs []string) (*transmuteReturnPair, error) {
+	managerOne, err := swarmMap.GetSwarmByID(swarmIDs[0])
+	if err != nil {
+		return nil, fmt.Errorf(transmuteSwarmFailFormat, err)
+	}
+	managerTwo, err := swarmMap.GetSwarmByID(swarmIDs[1])
+	if err != nil {
+		return nil, fmt.Errorf(transmuteSwarmFailFormat, err)
+	}
+	err = managerOne.Stitch(managerTwo)
+	if err != nil {
+		return nil, fmt.Errorf(transmuteSwarmFailFormat, err)
+	}
+	managerTwo.Close()
+
+	dataspaces, err := consolidateDataspaces(swarmMap, swarmIDs[0], swarmIDs[1])
+	if err != nil {
+		return nil, fmt.Errorf(transmuteSwarmFailFormat, err)
+	}
+	newPair := transmuteReturnPair{manager: managerOne, dataspaces: dataspaces}
+	return &newPair, nil
+}
+
+func splitTransmutation(swarmMap SwarmMap, candidate Candidate) (*transmuteReturnPair, *transmuteReturnPair, error) {
+	swarmID := candidate.GetSwarmIDs()[0]
+	manager, err := swarmMap.GetSwarmByID(swarmID)
+	if err != nil {
+		return nil, nil, fmt.Errorf(transmuteSwarmFailFormat, err)
+	}
+	newManager, err := manager.Bisect()
+	if err != nil {
+		return nil, nil, fmt.Errorf(transmuteSwarmFailFormat, err)
+	}
+	dspacesOne, dspacesTwo, err := placeDataspaces(swarmMap, swarmID, candidate.GetPlacementOne(), candidate.GetPlacementTwo())
+	if err != nil {
+		return nil, nil, fmt.Errorf(transmuteSwarmFailFormat, err)
+	}
+	pairOne := transmuteReturnPair{manager: manager, dataspaces: dspacesOne}
+	pairTwo := transmuteReturnPair{manager: newManager, dataspaces: dspacesTwo}
+	return &pairOne, &pairTwo, nil
 }
 
 /*Edits the swarm map according to the 'candidates' and returns all
@@ -108,10 +124,11 @@ func transmuteSwarmMap(swarmMap SwarmMap, oldSwarms []string, newSwarms []*trans
 	}
 
 	for _, pair := range newSwarms {
-		_, err = swarmMap.AddSwarm(pair.manager, pair.dataspaces)
+		newID, err := swarmMap.AddSwarm(pair.manager, pair.dataspaces)
 		if err != nil {
 			return fmt.Errorf(transmuteSwarmFailFormat, err)
 		}
+		pair.manager.SetID(newID)
 	}
 	return nil
 }

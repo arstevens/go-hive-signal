@@ -216,10 +216,11 @@ func (tg *TestSwarmGateway) Stitch(idOne string, idTwo string, newID string) err
 
 type TestSwarmManager struct{}
 
-func (sm *TestSwarmManager) AddEndpoint(handle.Conn) error {
+func (sm *TestSwarmManager) SetID(string) {}
+func (sm *TestSwarmManager) AddEndpoint(interface{}) error {
 	return nil
 }
-func (sm *TestSwarmManager) RemoveEndpoint(handle.Conn) error {
+func (sm *TestSwarmManager) RemoveEndpoint(interface{}) error {
 	return nil
 }
 func (sm *TestSwarmManager) Bisect() (SwarmManager, error) {
@@ -228,7 +229,7 @@ func (sm *TestSwarmManager) Bisect() (SwarmManager, error) {
 func (sm *TestSwarmManager) Stitch(SwarmManager) error {
 	return nil
 }
-func (sm *TestSwarmManager) Destroy() error {
+func (sm *TestSwarmManager) Close() error {
 	return nil
 }
 
