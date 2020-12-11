@@ -16,7 +16,7 @@ func TestTransmuterSplitMerge(t *testing.T) {
 	totalStartingSwarms := 10
 	totalDspacesPerSwarm := 5
 
-	swarmMap := TestSwarmMap{swarms: make(map[string][]string), idCount: totalStartingSwarms}
+	swarmMap := TestSwarmMap{swarms: make(map[string][]string), managers: make(map[string]SwarmManager), idCount: totalStartingSwarms}
 	dspaceCount := 0
 	for i := 0; i < totalStartingSwarms; i++ {
 		id := "/swarm/" + strconv.Itoa(i)
@@ -26,14 +26,28 @@ func TestTransmuterSplitMerge(t *testing.T) {
 			dspaceCount++
 		}
 		swarmMap.swarms[id] = dspaces
+		swarmMap.managers[id] = &TestSwarmManager{}
 	}
+	fmt.Printf("Pre-transmutation Mapping\n----------------------\n")
+	printSwarmMap(swarmMap)
 	tracker := TestSizeTracker{sizes: make(map[string]int)}
 	analyzer := TestSwarmAnalyzer{smap: &swarmMap}
-	gateway := TestSwarmGateway{}
 
 	PollPeriod = time.Second
-	_ = New(&tracker, &swarmMap, &analyzer, &gateway)
+	_ = New(&tracker, &swarmMap, &analyzer)
 	time.Sleep(time.Second * 5)
+
+	fmt.Printf("Post-transmutation Mapping\n----------------------\n")
+	printSwarmMap(swarmMap)
+}
+
+func printSwarmMap(smap TestSwarmMap) {
+	for id, dspaces := range smap.swarms {
+		fmt.Printf("(SwarmID)->%s\n", id)
+		for _, dspace := range dspaces {
+			fmt.Printf("\t%s\n", dspace)
+		}
+	}
 }
 
 func TestTransmuterAddRemove(t *testing.T) {
@@ -56,10 +70,9 @@ func TestTransmuterAddRemove(t *testing.T) {
 		tracker.sizes[id] = 0
 	}
 	analyzer := TestSwarmAnalyzer{smap: &swarmMap}
-	gateway := TestSwarmGateway{}
 
 	PollPeriod = time.Hour
-	transmuter := New(&tracker, &swarmMap, &analyzer, &gateway)
+	transmuter := New(&tracker, &swarmMap, &analyzer)
 
 	conn := FakeConn{}
 	for i := 0; i < totalRequests; i++ {
@@ -86,22 +99,6 @@ type TestSizeTracker struct {
 	sizes map[string]int
 }
 
-func (tt *TestSizeTracker) Increment(id string) {
-	if _, ok := tt.sizes[id]; !ok {
-		tt.sizes[id] = 0
-	}
-	tt.sizes[id]++
-	fmt.Printf("Incremented %s to (%d)\n", id, tt.sizes[id])
-}
-func (tt *TestSizeTracker) Decrement(id string) {
-	if _, ok := tt.sizes[id]; !ok {
-		tt.sizes[id] = 0
-	}
-	if tt.sizes[id] > 0 {
-		tt.sizes[id]--
-	}
-	fmt.Printf("Decremented %s to (%d)\n", id, tt.sizes[id])
-}
 func (tt *TestSizeTracker) GetSmallest() (string, error) {
 	if len(tt.sizes) == 0 {
 		return "", fmt.Errorf("No smallest swarms available in TestSizeTracker")
@@ -120,8 +117,9 @@ func (tt *TestSizeTracker) GetSmallest() (string, error) {
 }
 
 type TestSwarmMap struct {
-	swarms  map[string][]string
-	idCount int
+	swarms   map[string][]string
+	managers map[string]SwarmManager
+	idCount  int
 }
 
 func (tm *TestSwarmMap) RemoveSwarm(id string) error {
@@ -131,13 +129,23 @@ func (tm *TestSwarmMap) RemoveSwarm(id string) error {
 	delete(tm.swarms, id)
 	return nil
 }
-func (tm *TestSwarmMap) AddSwarm(dspaces []string) (string, error) {
+
+func (tm *TestSwarmMap) AddSwarm(manager SwarmManager, dspaces []string) (string, error) {
 	id := "/swarm/" + strconv.Itoa(tm.idCount)
 	tm.idCount++
 
 	tm.swarms[id] = dspaces
+	tm.managers[id] = manager
 	return id, nil
 }
+
+func (tm *TestSwarmMap) GetSwarmByID(id string) (SwarmManager, error) {
+	if manager, ok := tm.managers[id]; ok {
+		return manager, nil
+	}
+	return nil, fmt.Errorf("No Swarm with id %s", id)
+}
+
 func (tm *TestSwarmMap) GetDataspaces(id string) ([]string, error) {
 	if _, ok := tm.swarms[id]; !ok {
 		return nil, fmt.Errorf("Swarm %s does not exist in GetDataspaces", id)
@@ -203,6 +211,24 @@ func (tg *TestSwarmGateway) Bisect(id string, newIDOne string, newIDTwo string) 
 }
 func (tg *TestSwarmGateway) Stitch(idOne string, idTwo string, newID string) error {
 	fmt.Printf("(Gateway) Stitching (%s, %s) into %s\n", idOne, idTwo, newID)
+	return nil
+}
+
+type TestSwarmManager struct{}
+
+func (sm *TestSwarmManager) AddEndpoint(handle.Conn) error {
+	return nil
+}
+func (sm *TestSwarmManager) RemoveEndpoint(handle.Conn) error {
+	return nil
+}
+func (sm *TestSwarmManager) Bisect() (SwarmManager, error) {
+	return &TestSwarmManager{}, nil
+}
+func (sm *TestSwarmManager) Stitch(SwarmManager) error {
+	return nil
+}
+func (sm *TestSwarmManager) Destroy() error {
 	return nil
 }
 

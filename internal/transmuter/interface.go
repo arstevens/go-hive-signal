@@ -6,8 +6,6 @@ import "github.com/arstevens/go-request/handle"
 the number of members of each swarm*/
 type SwarmSizeTracker interface {
 	GetSmallest() (string, error)
-	Increment(string)
-	Decrement(string)
 }
 
 /*SwarmMap describes an object that maps Swarm IDs
@@ -16,8 +14,9 @@ type SwarmMap interface {
 	RemoveSwarm(string) error
 	/*Parameter: Swarm Dataspaces
 	  Return Value: SwarmID, error*/
-	AddSwarm([]string) (string, error)
+	AddSwarm(SwarmManager, []string) (string, error)
 	GetDataspaces(string) ([]string, error)
+	GetSwarmByID(string) (SwarmManager, error)
 }
 
 /*SwarmAnalyzer describes an object that can make
@@ -36,12 +35,12 @@ type Candidate interface {
 	GetPlacementTwo() map[string]bool
 }
 
-/*SwarmGateway describes an object that can perform
-low-level swarm changing operations*/
-type SwarmGateway interface {
-	AddEndpoint(string, handle.Conn) error
-	// Parameters: SwarmID, NewID_1, NewID_2
-	Bisect(string, string, string) error
-	// Parameters: SwarmID_1, SwarmID_2, NewID
-	Stitch(string, string, string) error
+type SwarmManager interface {
+	AddEndpoint(handle.Conn) error
+	RemoveEndpoint(handle.Conn) error
+	// Parameters New ID 1, New ID 2
+	Bisect() (SwarmManager, error)
+	// Parameters Swarm to merge, New ID
+	Stitch(SwarmManager) error
+	Destroy() error
 }

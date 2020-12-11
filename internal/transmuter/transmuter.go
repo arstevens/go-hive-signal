@@ -19,18 +19,15 @@ type SwarmTransmuter struct {
 	sizeTracker SwarmSizeTracker
 	swarmMap    SwarmMap
 	analyzer    SwarmAnalyzer
-	gateway     SwarmGateway
 }
 
 //New creates a new SwarmTransmuter
-func New(tracker SwarmSizeTracker, mapper SwarmMap, analyzer SwarmAnalyzer,
-	gateway SwarmGateway) *SwarmTransmuter {
-	go pollForTransmutation(mapper, gateway, analyzer)
+func New(tracker SwarmSizeTracker, mapper SwarmMap, analyzer SwarmAnalyzer) *SwarmTransmuter {
+	go pollForTransmutation(mapper, analyzer)
 	return &SwarmTransmuter{
 		sizeTracker: tracker,
 		swarmMap:    mapper,
 		analyzer:    analyzer,
-		gateway:     gateway,
 	}
 }
 
@@ -41,13 +38,17 @@ func (st *SwarmTransmuter) ProcessConnection(swarmID string, code int, conn hand
 		if err != nil {
 			return fmt.Errorf(transmuterFailFormat, err)
 		}
-		err = st.gateway.AddEndpoint(smallest, conn)
+		manager, err := st.swarmMap.GetSwarmByID(smallest)
 		if err != nil {
 			return fmt.Errorf(transmuterFailFormat, err)
 		}
-		st.sizeTracker.Increment(smallest)
+		manager.AddEndpoint(conn)
 	} else if code == SwarmDisconnect {
-		st.sizeTracker.Decrement(swarmID)
+		manager, err := st.swarmMap.GetSwarmByID(swarmID)
+		if err != nil {
+			return fmt.Errorf(transmuterFailFormat, err)
+		}
+		manager.RemoveEndpoint(conn)
 	} else {
 		return fmt.Errorf("Received invalid connection code in SwarmTransmuter")
 	}
