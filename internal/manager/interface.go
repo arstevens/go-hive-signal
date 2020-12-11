@@ -5,7 +5,17 @@ import "io"
 /*SwarmGateway returns a connection object to an endpoint
 in a designated swarm*/
 type SwarmGateway interface {
-	GetEndpoint(string) (interface{}, error)
+	AddEndpoint(Conn) error
+	RetireEndpoint(Conn) error
+	GetEndpoint() (Conn, error)
+	EvenlySplit() (SwarmGateway, error)
+	GetTotalEndpoints() int
+	Merge(SwarmGateway) error
+	io.Closer
+}
+
+type SwarmSizeTracker interface {
+	SetSize(string, int)
 }
 
 /*AgentNegotiator takes in two connection objects(the offerer
