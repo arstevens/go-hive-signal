@@ -63,13 +63,20 @@ func (sm *SwarmManager) AttemptToPair(conn interface{}) error {
 }
 
 func (sm *SwarmManager) AddEndpoint(c interface{}) error {
+	//Connect new endpoint with old endpoint so that state can be copied over
 	conn, ok := c.(Conn)
 	if !ok {
 		return fmt.Errorf("Failed to add endpoint in SwarmManager.AddEndpoint(): parameter of wrong type")
 	}
+	err := connectForContextRetrieval(conn, sm.negotiate, sm.gateway)
+	if err != nil {
+		return err
+	}
+
+	//Add new endpoint to the gateway structure
 	sm.gatewayLock.Lock()
 	defer sm.gatewayLock.Unlock()
-	err := sm.gateway.AddEndpoint(conn)
+	err = sm.gateway.AddEndpoint(conn)
 	if err != nil {
 		return fmt.Errorf("Failed to add endpoint in SwarmManager.AddEndpoint(): %v", err)
 	}
@@ -77,6 +84,22 @@ func (sm *SwarmManager) AddEndpoint(c interface{}) error {
 	if sm.changes > ChangeTriggerLimit {
 		sm.tracker.SetSize(sm.id, sm.gateway.GetTotalEndpoints())
 		sm.changes = 0
+	}
+	return nil
+}
+
+func connectForContextRetrieval(conn Conn, negotiate AgentNegotiator, gateway SwarmGateway) error {
+	offerer, err := gateway.GetEndpoint()
+	if err != nil {
+		return fmt.Errorf("Failed to get endpoint in SwarmManager.AddEndpoint(): %v", err)
+	}
+	offererConn, ok := offerer.(Conn)
+	if !ok {
+		return fmt.Errorf("Failed to negotiate in SwarmManager.AddEndpoint(): Connection of wrong type")
+	}
+	err = negotiate(offererConn, conn)
+	if err != nil {
+		return fmt.Errorf("Failed to negotiate in SwarmManager.AddEndpoint(): %v", err)
 	}
 	return nil
 }
