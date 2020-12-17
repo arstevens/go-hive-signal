@@ -133,9 +133,9 @@ func (sg *SwarmGateway) Merge(g manager.SwarmGateway) error {
 }
 
 func (sg *SwarmGateway) Close() error {
-  for !sg.inactiveQueue.IsEmpty() {
-    sg.inactiveQueue.Pop()
-  }
+	for !sg.inactiveQueue.IsEmpty() {
+		sg.inactiveQueue.Pop()
+	}
 	for !sg.activeQueue.IsEmpty() {
 		conn := sg.activeQueue.Pop()
 		conn.Close()

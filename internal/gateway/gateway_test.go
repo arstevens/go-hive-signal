@@ -9,6 +9,7 @@ import (
 )
 
 func TestSwarmGateway(t *testing.T) {
+	fmt.Printf("---------------------------\n    SWARM GATEWAY TEST\n---------------------------\n")
 	dialEndpoint = func(addr string) (Conn, error) {
 		return &FakeConn{addr: addr, closed: false}, nil
 	}
@@ -74,7 +75,7 @@ func TestSwarmGateway(t *testing.T) {
 }
 
 func TestActiveConnectionQueue(t *testing.T) {
-	fmt.Printf("---------------------\nACTIVE CONNECTION QUEUE TEST\n---------------------------\n")
+	fmt.Printf("\n---------------------------\nACTIVE CONNECTION QUEUE TEST\n---------------------------\n")
 	queueSize := 10
 	queue := newActiveConnectionQueue(queueSize)
 	for i := 0; i < queueSize; i++ {
@@ -153,7 +154,7 @@ func TestActiveConnectionQueue(t *testing.T) {
 }
 
 func TestEndpointPriorityQueue(t *testing.T) {
-	fmt.Printf("---------------------\nINACTIVE PRIORITY QUEUE TEST\n---------------------------\n")
+	fmt.Printf("\n---------------------------\nINACTIVE PRIORITY QUEUE TEST\n---------------------------\n")
 	pq := newEndpointPriorityQueue()
 
 	rand.Seed(time.Now().UnixNano())
