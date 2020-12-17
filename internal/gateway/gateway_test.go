@@ -8,10 +8,75 @@ import (
 	"time"
 )
 
+func TestSwarmGateway(t *testing.T) {
+	dialEndpoint = func(addr string) (Conn, error) {
+		return &FakeConn{addr: addr, closed: false}, nil
+	}
+
+	activeSize := 10
+	inactiveSize := 20
+	gateway := New(activeSize, inactiveSize)
+	totalAdds := activeSize + inactiveSize
+
+	fmt.Printf("Populating gateway with %d connections...\n", totalAdds)
+	for i := 0; i < totalAdds; i++ {
+		conn := &FakeConn{addr: "/address/" + strconv.Itoa(i), closed: false}
+		err := gateway.AddEndpoint(conn)
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+	fmt.Printf("\tTotal Connections: active=%d inactive=%d\n", gateway.activeQueue.GetSize(), gateway.inactiveQueue.GetSize())
+
+	removals := make([]*FakeConn, activeSize)
+	fmt.Printf("Getting %d endpoints...\n", activeSize)
+	for i := 0; i < activeSize; i++ {
+		conn, err := gateway.GetEndpoint()
+		if err != nil {
+			t.Fatal(err)
+		}
+		c := conn.(*FakeConn)
+		removals[i] = c
+		fmt.Printf("\tFetched endpoint at %s\n", c.GetAddress())
+	}
+	fmt.Printf("\tTotal Connections: active=%d inactive=%d\n", gateway.activeQueue.GetSize(), gateway.inactiveQueue.GetSize())
+
+	fmt.Printf("Retiring %d endpoints...\n", len(removals))
+	for i := 0; i < len(removals); i++ {
+		err := gateway.RetireEndpoint(removals[i])
+		if err != nil {
+			t.Fatal(err)
+		}
+		fmt.Printf("\tRemoved endpoint at %s\n", removals[i].GetAddress())
+	}
+	fmt.Printf("\tTotal Connections: active=%d inactive=%d\n", gateway.activeQueue.GetSize(), gateway.inactiveQueue.GetSize())
+
+	fmt.Printf("Evenly splitting swarm...\n")
+	g2, err := gateway.EvenlySplit()
+	if err != nil {
+		t.Fatal(err)
+	}
+	gateway2 := g2.(*SwarmGateway)
+	fmt.Printf("\t(Original)Total Connections: active=%d inactive=%d\n", gateway.activeQueue.GetSize(), gateway.inactiveQueue.GetSize())
+	fmt.Printf("\t(New)Total Connections: active=%d inactive=%d\n", gateway2.activeQueue.GetSize(), gateway2.inactiveQueue.GetSize())
+
+	fmt.Printf("Merging Original swarm into New swarm...\n")
+	err = gateway2.Merge(gateway)
+	if err != nil {
+		t.Fatal(err)
+	}
+	fmt.Printf("\t(Original)Total Connections: active=%d inactive=%d\n", gateway.activeQueue.GetSize(), gateway.inactiveQueue.GetSize())
+	fmt.Printf("\t(New)Total Connections: active=%d inactive=%d\n", gateway2.activeQueue.GetSize(), gateway2.inactiveQueue.GetSize())
+
+	fmt.Printf("Closing New swarm...\n")
+	gateway2.Close()
+	fmt.Printf("\t(New)Total Connections: active=%d inactive=%d\n", gateway2.activeQueue.GetSize(), gateway2.inactiveQueue.GetSize())
+}
+
 func TestActiveConnectionQueue(t *testing.T) {
 	fmt.Printf("---------------------\nACTIVE CONNECTION QUEUE TEST\n---------------------------\n")
 	queueSize := 10
-	queue := NewActiveConnectionQueue(queueSize)
+	queue := newActiveConnectionQueue(queueSize)
 	for i := 0; i < queueSize; i++ {
 		queue.Push(&FakeConn{
 			addr:   "/address/" + strconv.Itoa(i),
@@ -89,7 +154,7 @@ func TestActiveConnectionQueue(t *testing.T) {
 
 func TestEndpointPriorityQueue(t *testing.T) {
 	fmt.Printf("---------------------\nINACTIVE PRIORITY QUEUE TEST\n---------------------------\n")
-	pq := NewEndpointPriorityQueue()
+	pq := newEndpointPriorityQueue()
 
 	rand.Seed(time.Now().UnixNano())
 	totalItems := 50
@@ -117,8 +182,8 @@ func TestEndpointPriorityQueue(t *testing.T) {
 
 }
 
-func printPQ(pq *EndpointPriorityQueue) {
-	n := pq.Size()
+func printPQ(pq *endpointPriorityQueue) {
+	n := pq.GetSize()
 	if n == 0 {
 		fmt.Printf("\tEMPTY\n")
 		return
@@ -127,7 +192,8 @@ func printPQ(pq *EndpointPriorityQueue) {
 		if i%10 == 0 {
 			fmt.Printf("\n\t")
 		}
-		fmt.Printf("%s ", pq.Pop())
+		s, _ := pq.Pop()
+		fmt.Printf("%s ", s)
 	}
 }
 

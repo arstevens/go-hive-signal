@@ -4,19 +4,19 @@ import "fmt"
 
 var DefaultQueueCapacity = 100
 
-type ActiveConnectionQueue struct {
+type activeConnectionQueue struct {
 	queue []Conn
 	head  int
 	tail  int
 	size  int
 }
 
-func NewActiveConnectionQueue(capacity int) *ActiveConnectionQueue {
+func newActiveConnectionQueue(capacity int) *activeConnectionQueue {
 	if capacity == 0 {
 		capacity = DefaultQueueCapacity
 	}
 
-	return &ActiveConnectionQueue{
+	return &activeConnectionQueue{
 		queue: make([]Conn, capacity),
 		head:  0,
 		tail:  0,
@@ -24,9 +24,11 @@ func NewActiveConnectionQueue(capacity int) *ActiveConnectionQueue {
 	}
 }
 
-func (aq *ActiveConnectionQueue) GetCapacity() int { return len(aq.queue) }
+func (aq *activeConnectionQueue) IsEmpty() bool    { return aq.size == 0 }
+func (aq *activeConnectionQueue) GetCapacity() int { return len(aq.queue) }
+func (aq *activeConnectionQueue) GetSize() int     { return aq.size }
 
-func (aq *ActiveConnectionQueue) Resize(newSize int) error {
+func (aq *activeConnectionQueue) Resize(newSize int) error {
 	if newSize < aq.size {
 		return fmt.Errorf("Too many entries. Cannot resize queue in ActiveConnectQueue.Resize()")
 	} else if newSize == aq.size {
@@ -46,13 +48,13 @@ func (aq *ActiveConnectionQueue) Resize(newSize int) error {
 	return nil
 }
 
-func (aq *ActiveConnectionQueue) IsFull() bool {
+func (aq *activeConnectionQueue) IsFull() bool {
 	return aq.size == len(aq.queue)
 }
 
-func (aq *ActiveConnectionQueue) Push(c Conn) error {
+func (aq *activeConnectionQueue) Push(c Conn) error {
 	if aq.IsFull() {
-		return fmt.Errorf("Queue is full in ActiveConnectionQueue.Push()")
+		return fmt.Errorf("Queue is full in activeConnectionQueue.Push()")
 	}
 	aq.queue[aq.tail] = c
 	aq.tail = (aq.tail + 1) % len(aq.queue)
@@ -60,7 +62,7 @@ func (aq *ActiveConnectionQueue) Push(c Conn) error {
 	return nil
 }
 
-func (aq *ActiveConnectionQueue) Pop() Conn {
+func (aq *activeConnectionQueue) Pop() Conn {
 	if aq.size == 0 {
 		return nil
 	}

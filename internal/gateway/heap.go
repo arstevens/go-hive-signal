@@ -18,8 +18,8 @@ func (pq priorityQueue) Less(i, j int) bool {
 }
 func (pq priorityQueue) Swap(i, j int) {
 	pq[i], pq[j] = pq[j], pq[i]
-	*pq[i].index = j
-	*pq[j].index = i
+	*pq[j].index = j
+	*pq[i].index = i
 }
 func (pq *priorityQueue) Push(x interface{}) {
 	n := len(*pq)
@@ -37,24 +37,28 @@ func (pq *priorityQueue) Pop() interface{} {
 	return item
 }
 
-type EndpointPriorityQueue struct {
+type endpointPriorityQueue struct {
 	pq       *priorityQueue
 	indexMap map[string]*int
 }
 
-func NewEndpointPriorityQueue() *EndpointPriorityQueue {
+func newEndpointPriorityQueue() *endpointPriorityQueue {
 	pq := make(priorityQueue, 0)
-	return &EndpointPriorityQueue{
+	return &endpointPriorityQueue{
 		pq:       &pq,
 		indexMap: make(map[string]*int),
 	}
 }
 
-func (eq *EndpointPriorityQueue) Size() int {
+func (eq *endpointPriorityQueue) IsEmpty() bool {
+	return eq.GetSize() == 0
+}
+
+func (eq *endpointPriorityQueue) GetSize() int {
 	return eq.pq.Len()
 }
 
-func (eq *EndpointPriorityQueue) Push(address string, priority int) {
+func (eq *endpointPriorityQueue) Push(address string, priority int) {
 	n := eq.pq.Len()
 	item := &inactiveEndpointEntry{
 		address:  address,
@@ -65,7 +69,7 @@ func (eq *EndpointPriorityQueue) Push(address string, priority int) {
 	eq.indexMap[address] = item.index
 }
 
-func (eq *EndpointPriorityQueue) PushNew(address string) {
+func (eq *endpointPriorityQueue) PushNew(address string) {
 	n := eq.pq.Len()
 	prio := 0
 	if n > 0 {
@@ -76,18 +80,18 @@ func (eq *EndpointPriorityQueue) PushNew(address string) {
 	eq.Push(address, prio)
 }
 
-func (eq *EndpointPriorityQueue) Pop() string {
+func (eq *endpointPriorityQueue) Pop() (string, int) {
 	if eq.pq.Len() == 0 {
-		return ""
+		return "", 0
 	}
 	item := heap.Pop(eq.pq)
 	endpointEntry := item.(*inactiveEndpointEntry)
 	delete(eq.indexMap, endpointEntry.address)
 
-	return endpointEntry.address
+	return endpointEntry.address, endpointEntry.hitScore
 }
 
-func (eq *EndpointPriorityQueue) Remove(address string) {
+func (eq *endpointPriorityQueue) Remove(address string) {
 	if index, ok := eq.indexMap[address]; ok {
 		heap.Remove(eq.pq, *index)
 	}
