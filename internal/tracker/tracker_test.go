@@ -11,42 +11,32 @@ import (
 func TestTracker(t *testing.T) {
 	fmt.Printf("---------------TRACKER TEST------------------\n")
 
-	totalSwarms := 5
+	totalSwarms := 10
 	swarms := make([]string, totalSwarms)
 	for i := 0; i < totalSwarms; i++ {
-		swarms[i] = "/swarm/" + strconv.Itoa(i)
+		swarms[i] = "/dataspace/" + strconv.Itoa(i)
 	}
 
-	tracker := New()
-	pollTime := time.Millisecond * 50
-	totalReads := 10
-	go func() {
-		for i := 0; i < totalReads; i++ {
-			time.Sleep(pollTime)
-			smallestID, err := tracker.GetSmallest()
-			fmt.Printf("Smallest Result: ID: %s, Size: %d, Error: %v\n", smallestID, tracker.GetSize(smallestID), err)
-		}
-	}()
-
-	totalIncs := 300
-	totalDecs := 60
-	augPollTime := (pollTime * time.Duration(totalReads)) / time.Duration(totalIncs+totalDecs)
+	FrequencyCalculationPeriod = time.Millisecond * 10
+	tracker := New(0)
+	totalOps := 300
+	freqCountPer := 1000
+	pollTime := time.Millisecond * 3
 
 	rand.Seed(time.Now().UnixNano())
-	for i := 0; i < totalIncs; i++ {
-		time.Sleep(augPollTime)
-		swarmID := swarms[rand.Intn(len(swarms))]
-		s := tracker.GetSize(swarmID)
-		tracker.SetSize(swarmID, s+1)
-	}
-	for i := 0; i < totalDecs; i++ {
-		time.Sleep(augPollTime)
-		swarmID := swarms[rand.Intn(len(swarms))]
-		s := tracker.GetSize(swarmID)
-		if s == 0 {
-			fmt.Printf("Cannot decrement. Already at 0.\n")
-		} else {
-			tracker.SetSize(swarmID, s-1)
+	for i := 0; i < totalOps; i++ {
+		time.Sleep(pollTime)
+
+		dspace := swarms[rand.Intn(totalSwarms)]
+		tracker.SetSize(dspace, tracker.GetSize(dspace)+1)
+
+		count := rand.Intn(freqCountPer)
+		for j := 0; j < count; j++ {
+			tracker.IncrementFrequencyCounter(dspace)
 		}
+	}
+
+	for _, dspace := range swarms {
+		fmt.Printf("Swarm %s : Size %d : Load %d\n", dspace, tracker.GetSize(dspace), tracker.GetLoad(dspace))
 	}
 }

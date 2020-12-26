@@ -1,30 +1,57 @@
 package tracker
 
 import (
-	"fmt"
-	"math"
 	"sync"
 )
 
 /*SwarmSizeTracker is an object that allows the tracking and
 retrieving of swarm sizes*/
 type SwarmSizeTracker struct {
-	trackMap map[string]int
-	mapMutex *sync.Mutex
+	loadMap       map[string]int
+	lMapMutex     *sync.Mutex
+	trackers      map[string]*swarmLoadTracker
+	trackersMutex *sync.Mutex
+	trackMap      map[string]int
+	tMapMutex     *sync.Mutex
 }
 
 //New creates a new instance of SwarmSizeTracker
-func New() *SwarmSizeTracker {
-	return &SwarmSizeTracker{
-		trackMap: make(map[string]int),
-		mapMutex: &sync.Mutex{},
+func New(historyLength int) *SwarmSizeTracker {
+	tracker := &SwarmSizeTracker{
+		loadMap:       make(map[string]int),
+		lMapMutex:     &sync.Mutex{},
+		trackers:      make(map[string]*swarmLoadTracker),
+		trackersMutex: &sync.Mutex{},
+		trackMap:      make(map[string]int),
+		tMapMutex:     &sync.Mutex{},
 	}
+	go calculateFrequencyOnInterval(historyLength, tracker.loadMap, tracker.trackers,
+		tracker.lMapMutex, tracker.trackersMutex)
+	return tracker
+}
+
+func (st *SwarmSizeTracker) IncrementFrequencyCounter(dataspace string) {
+	st.lMapMutex.Lock()
+	if _, ok := st.loadMap[dataspace]; !ok {
+		st.loadMap[dataspace] = 0
+	}
+	st.loadMap[dataspace]++
+	st.lMapMutex.Unlock()
+}
+
+func (st *SwarmSizeTracker) GetLoad(dataspace string) int {
+	st.trackersMutex.Lock()
+	defer st.trackersMutex.Unlock()
+	if tracker, ok := st.trackers[dataspace]; ok {
+		return tracker.CalculateAverageFrequency()
+	}
+	return 0
 }
 
 //GetSize returns the recorded size of the 'swarmID'
 func (st *SwarmSizeTracker) GetSize(swarmID string) int {
-	st.mapMutex.Lock()
-	defer st.mapMutex.Unlock()
+	st.tMapMutex.Lock()
+	defer st.tMapMutex.Unlock()
 	if size, ok := st.trackMap[swarmID]; ok {
 		return size
 	}
@@ -32,27 +59,7 @@ func (st *SwarmSizeTracker) GetSize(swarmID string) int {
 }
 
 func (st *SwarmSizeTracker) SetSize(swarmID string, size int) {
-	st.mapMutex.Lock()
+	st.tMapMutex.Lock()
 	st.trackMap[swarmID] = size
-	st.mapMutex.Unlock()
-}
-
-//GetSmallest returns the smallest known swarm ID
-func (st *SwarmSizeTracker) GetSmallest() (string, error) {
-	minID := ""
-	minSize := math.MaxInt32
-
-	st.mapMutex.Lock()
-	for swarmID, size := range st.trackMap {
-		if size < minSize {
-			minSize = size
-			minID = swarmID
-		}
-	}
-	st.mapMutex.Unlock()
-
-	if minID == "" {
-		return "", fmt.Errorf("No smallest swarm found in SwarmSizeTracker.GetSmallest()")
-	}
-	return minID, nil
+	st.tMapMutex.Unlock()
 }
