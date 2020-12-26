@@ -32,23 +32,23 @@ func New(tracker SwarmSizeTracker, mapper SwarmMap, analyzer SwarmAnalyzer) *Swa
 }
 
 //ProcessConnection processes a new request identified by 'code'
-func (st *SwarmTransmuter) ProcessConnection(swarmID string, code int, conn handle.Conn) error {
+func (st *SwarmTransmuter) ProcessConnection(dataspaceID string, code int, conn handle.Conn) error {
 	if code == SwarmConnect {
-		smallest, err := st.sizeTracker.GetSmallest()
+		needyID, err := st.sizeTracker.GetMostNeedy()
 		if err != nil {
 			return fmt.Errorf(transmuterFailFormat, err)
 		}
-		manager, err := st.swarmMap.GetSwarmByID(smallest)
+		manager, err := st.swarmMap.GetSwarm(needyID)
 		if err != nil {
 			return fmt.Errorf(transmuterFailFormat, err)
 		}
-		manager.AddEndpoint(conn)
+		manager.AddEndpointConn(conn)
 	} else if code == SwarmDisconnect {
-		manager, err := st.swarmMap.GetSwarmByID(swarmID)
+		manager, err := st.swarmMap.GetSwarm(dataspaceID)
 		if err != nil {
 			return fmt.Errorf(transmuterFailFormat, err)
 		}
-		manager.RemoveEndpoint(conn)
+		manager.RemoveEndpointConn(conn)
 	} else {
 		return fmt.Errorf("Received invalid connection code in SwarmTransmuter")
 	}

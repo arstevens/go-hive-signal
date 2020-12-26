@@ -7,233 +7,150 @@ import (
 	"strconv"
 	"testing"
 	"time"
-
-	"github.com/arstevens/go-request/handle"
 )
 
-func TestTransmuterSplitMerge(t *testing.T) {
-	fmt.Println("\n----------STARTING SPLIT/MERGE TEST-------------")
-	totalStartingSwarms := 10
-	totalDspacesPerSwarm := 5
-
-	swarmMap := TestSwarmMap{swarms: make(map[string][]string), managers: make(map[string]SwarmManager), idCount: totalStartingSwarms}
-	dspaceCount := 0
-	for i := 0; i < totalStartingSwarms; i++ {
-		id := "/swarm/" + strconv.Itoa(i)
-		dspaces := make([]string, totalDspacesPerSwarm)
-		for j := 0; j < totalDspacesPerSwarm; j++ {
-			dspaces[j] = "/dataspace/" + strconv.Itoa(dspaceCount)
-			dspaceCount++
+func TestSwarmTransmuter(t *testing.T) {
+	totalSwarms := 5
+	endpointsPerSwarm := 5
+	smap := &TestSwarmMap{managers: make(map[string]SwarmManager)}
+	sizeTracker := &TestSwarmSizeTracker{needs: smap.managers}
+	analyzer := &TestSwarmAnalyzer{smap: smap}
+	for i := 0; i < totalSwarms; i++ {
+		endpoints := make([]string, endpointsPerSwarm)
+		for j := 0; j < endpointsPerSwarm; j++ {
+			endpoints[j] = "/endpoint/" + strconv.Itoa(i*endpointsPerSwarm+j)
 		}
-		swarmMap.swarms[id] = dspaces
-		swarmMap.managers[id] = &TestSwarmManager{}
+		swarmID := "/dataspace/" + strconv.Itoa(i)
+		manager := &TestSwarmManager{endpoints: endpoints}
+		smap.managers[swarmID] = manager
 	}
-	fmt.Printf("Pre-transmutation Mapping\n----------------------\n")
-	printSwarmMap(swarmMap)
-	tracker := TestSizeTracker{sizes: make(map[string]int)}
-	analyzer := TestSwarmAnalyzer{smap: &swarmMap}
+	printSwarmSizes(smap.managers)
 
 	PollPeriod = time.Second
-	_ = New(&tracker, &swarmMap, &analyzer)
+	transmuter := New(sizeTracker, smap, analyzer)
+
+	totalConnections := 50
+	for i := 0; i < totalConnections; i++ {
+		fc := &FakeConn{id: "/endpoint/" + strconv.Itoa(totalSwarms*endpointsPerSwarm+i)}
+		dspace := "/dataspace/" + strconv.Itoa(rand.Intn(totalSwarms))
+		transmuter.ProcessConnection(dspace, 0, fc)
+	}
+	printSwarmSizes(smap.managers)
 	time.Sleep(time.Second * 5)
-
-	fmt.Printf("Post-transmutation Mapping\n----------------------\n")
-	printSwarmMap(swarmMap)
+	printSwarmSizes(smap.managers)
 }
 
-func printSwarmMap(smap TestSwarmMap) {
-	for id, dspaces := range smap.swarms {
-		fmt.Printf("(SwarmID)->%s\n", id)
-		for _, dspace := range dspaces {
-			fmt.Printf("\t%s\n", dspace)
+func printSwarmSizes(m map[string]SwarmManager) {
+	fmt.Printf("\n---------------------------------\n")
+	for id, manager := range m {
+		fmt.Printf("Swarm: %s\n", id)
+		endpoints := manager.GetEndpoints()
+		for _, endpoint := range endpoints {
+			fmt.Printf("\t%s\n", endpoint)
 		}
 	}
 }
 
-func TestTransmuterAddRemove(t *testing.T) {
-	fmt.Println("\n----------STARTING ADD/REMOVE TEST-------------")
-	totalRequests := 50
-	totalStartingSwarms := 10
-	totalDspacesPerSwarm := 5
-
-	swarmMap := TestSwarmMap{swarms: make(map[string][]string), idCount: totalStartingSwarms}
-	tracker := TestSizeTracker{sizes: make(map[string]int)}
-	dspaceCount := 0
-	for i := 0; i < totalStartingSwarms; i++ {
-		id := "/swarm/" + strconv.Itoa(i)
-		dspaces := make([]string, totalDspacesPerSwarm)
-		for j := 0; j < totalDspacesPerSwarm; j++ {
-			dspaces[j] = "/dataspace/" + strconv.Itoa(dspaceCount)
-			dspaceCount++
-		}
-		swarmMap.swarms[id] = dspaces
-		tracker.sizes[id] = 0
-	}
-	analyzer := TestSwarmAnalyzer{smap: &swarmMap}
-
-	PollPeriod = time.Hour
-	transmuter := New(&tracker, &swarmMap, &analyzer)
-
-	conn := FakeConn{}
-	for i := 0; i < totalRequests; i++ {
-		var id string
-		var code int
-		j, counter := 0, rand.Intn(len(swarmMap.swarms))
-		for sID, _ := range swarmMap.swarms {
-			if j == counter {
-				id = sID
-				break
-			}
-			j++
-		}
-
-		code = SwarmConnect
-		if rand.Intn(100) < 50 {
-			code = SwarmDisconnect
-		}
-		transmuter.ProcessConnection(id, code, &conn)
-	}
+type TestSwarmSizeTracker struct {
+	needs map[string]SwarmManager
 }
 
-type TestSizeTracker struct {
-	sizes map[string]int
-}
-
-func (tt *TestSizeTracker) GetSmallest() (string, error) {
-	if len(tt.sizes) == 0 {
-		return "", fmt.Errorf("No smallest swarms available in TestSizeTracker")
-	}
-
-	minSize := math.MaxInt32
+func (ss *TestSwarmSizeTracker) GetMostNeedy() (string, error) {
 	minID := ""
-	for id, size := range tt.sizes {
+	minSize := math.MaxInt32
+	for key, value := range ss.needs {
+		size := len(value.GetEndpoints())
 		if size < minSize {
-			minSize = size
-			minID = id
+			minID, minSize = key, size
 		}
 	}
-	fmt.Printf("Returing smallest swarm %s\n", minID)
+	if minID == "" {
+		return "", fmt.Errorf("Failed to retrieve minimum")
+	}
 	return minID, nil
 }
 
 type TestSwarmMap struct {
-	swarms   map[string][]string
 	managers map[string]SwarmManager
-	idCount  int
 }
 
-func (tm *TestSwarmMap) RemoveSwarm(id string) error {
-	if _, ok := tm.swarms[id]; !ok {
-		return fmt.Errorf("Swarm %s does not exist in RemoveSwarm", id)
-	}
-	delete(tm.swarms, id)
-	return nil
-}
-
-func (tm *TestSwarmMap) AddSwarm(manager SwarmManager, dspaces []string) (string, error) {
-	id := "/swarm/" + strconv.Itoa(tm.idCount)
-	tm.idCount++
-
-	tm.swarms[id] = dspaces
-	tm.managers[id] = manager
-	return id, nil
-}
-
-func (tm *TestSwarmMap) GetSwarmByID(id string) (SwarmManager, error) {
+func (tm *TestSwarmMap) GetSwarm(id string) (SwarmManager, error) {
 	if manager, ok := tm.managers[id]; ok {
 		return manager, nil
 	}
 	return nil, fmt.Errorf("No Swarm with id %s", id)
 }
 
-func (tm *TestSwarmMap) GetDataspaces(id string) ([]string, error) {
-	if _, ok := tm.swarms[id]; !ok {
-		return nil, fmt.Errorf("Swarm %s does not exist in GetDataspaces", id)
-	}
-	return tm.swarms[id], nil
-}
-
 type TestCandidate struct {
-	split      bool
-	ids        []string
-	placements []map[string]bool
+	transferer string
+	transferee string
+	size       int
 }
 
-func (tc *TestCandidate) IsSplit() bool                    { return tc.split }
-func (tc *TestCandidate) GetSwarmIDs() []string            { return tc.ids }
-func (tc *TestCandidate) GetPlacementOne() map[string]bool { return tc.placements[0] }
-func (tc *TestCandidate) GetPlacementTwo() map[string]bool { return tc.placements[1] }
-
-func splitStringSlice(s []string) []map[string]bool {
-	placements := make([]map[string]bool, 2)
-	placements[0] = make(map[string]bool)
-	placements[1] = make(map[string]bool)
-	for i := 0; i < len(s)/2; i++ {
-		placements[0][s[i]] = true
-	}
-	for i := len(s) / 2; i < len(s); i++ {
-		placements[1][s[i]] = true
-	}
-	return placements
-}
+func (tc *TestCandidate) GetTransfererID() string { return tc.transferer }
+func (tc *TestCandidate) GetTransfereeID() string { return tc.transferee }
+func (tc *TestCandidate) GetTransferSize() int    { return tc.size }
 
 type TestSwarmAnalyzer struct {
 	smap *TestSwarmMap
 }
 
 func (ta *TestSwarmAnalyzer) CalculateCandidates() ([]Candidate, error) {
-	candidates := make([]Candidate, 0)
-	candidate := make([]string, 0)
-	for id, dataspaces := range ta.smap.swarms {
-		if len(candidate) == 2 {
-			finalCandidate := TestCandidate{split: false, ids: candidate, placements: nil}
-			candidates = append(candidates, &finalCandidate)
-			candidate = make([]string, 0)
-		} else if len(candidate) == 1 && rand.Intn(100) < 50 {
-			finalCandidate := TestCandidate{split: true, ids: candidate, placements: splitStringSlice(dataspaces)}
-			candidates = append(candidates, &finalCandidate)
-			candidate = make([]string, 0)
-		}
-		candidate = append(candidate, id)
+	totalPairings := rand.Intn(len(ta.smap.managers) / 2)
+	candidates := make([]Candidate, totalPairings)
+	slice := mapToSlice(ta.smap.managers)
+	for i := 0; i < totalPairings; i++ {
+		id1, id2 := slice[i], slice[len(slice)-i-1]
+		size := rand.Intn(10)
+		candidates[i] = &TestCandidate{transferer: id1, transferee: id2, size: size}
 	}
 	return candidates, nil
 }
 
-type TestSwarmGateway struct{}
-
-func (tg *TestSwarmGateway) AddEndpoint(id string, conn handle.Conn) error {
-	fmt.Printf("(Gateway) Adding endpoint to swarm %s\n", id)
-	return nil
-}
-func (tg *TestSwarmGateway) Bisect(id string, newIDOne string, newIDTwo string) error {
-	fmt.Printf("(Gateway) Bisecting %s into (%s, %s)\n", id, newIDOne, newIDTwo)
-	return nil
-}
-func (tg *TestSwarmGateway) Stitch(idOne string, idTwo string, newID string) error {
-	fmt.Printf("(Gateway) Stitching (%s, %s) into %s\n", idOne, idTwo, newID)
-	return nil
+func mapToSlice(m map[string]SwarmManager) []string {
+	s := make([]string, 0, len(m))
+	for key, _ := range m {
+		s = append(s, key)
+	}
+	return s
 }
 
-type TestSwarmManager struct{}
+type TestSwarmManager struct {
+	endpoints []string
+}
 
 func (sm *TestSwarmManager) SetID(string) {}
-func (sm *TestSwarmManager) AddEndpoint(interface{}) error {
+func (sm *TestSwarmManager) AddEndpointConn(i interface{}) error {
+	c := i.(*FakeConn)
+	return sm.AddEndpoint(c.id)
 	return nil
 }
-func (sm *TestSwarmManager) RemoveEndpoint(interface{}) error {
+func (sm *TestSwarmManager) RemoveEndpointConn(i interface{}) error {
+	c := i.(*FakeConn)
+	return sm.RemoveEndpoint(c.id)
+}
+func (sm *TestSwarmManager) AddEndpoint(s string) error {
+	sm.endpoints = append(sm.endpoints, s)
+
 	return nil
 }
-func (sm *TestSwarmManager) Bisect() (SwarmManager, error) {
-	return &TestSwarmManager{}, nil
-}
-func (sm *TestSwarmManager) Stitch(SwarmManager) error {
+func (sm *TestSwarmManager) RemoveEndpoint(s string) error {
+	for i := 0; i < len(sm.endpoints); i++ {
+		if sm.endpoints[i] == s {
+			sm.endpoints = append(sm.endpoints[:i], sm.endpoints[i+1:]...)
+			return nil
+		}
+	}
 	return nil
+}
+func (sm *TestSwarmManager) GetEndpoints() []string {
+	return sm.endpoints
 }
 func (sm *TestSwarmManager) Close() error {
 	return nil
 }
 
-type FakeConn struct{}
+type FakeConn struct{ id string }
 
 func (fc *FakeConn) Read([]byte) (int, error)  { return 0, nil }
 func (fc *FakeConn) Write([]byte) (int, error) { return 0, nil }
