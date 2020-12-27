@@ -1,31 +1,27 @@
 package analyzer
 
 type Candidate struct {
-	isSplit      bool
-	swarms       []string
-	placementOne map[string]bool
-	placementTwo map[string]bool
+	transfererID string
+	transfereeID string
+	transferSize int
 }
 
-func (c *Candidate) IsSplit() bool                    { return c.isSplit }
-func (c *Candidate) GetSwarmIDs() []string            { return c.swarms }
-func (c *Candidate) GetPlacementOne() map[string]bool { return c.placementOne }
-func (c *Candidate) GetPlacementTwo() map[string]bool { return c.placementTwo }
+func (c *Candidate) GetTransfererID() string { return c.transfererID }
+func (c *Candidate) GetTransfereeID() string { return c.transfereeID }
+func (c *Candidate) GetTransferSize() int    { return c.transferSize }
 
-type swarmInfo struct {
-	SwarmID   string
-	SwarmSize int
-	FitScore  float64
+type swarmDistanceInfo struct {
+	dataspace string
+	distance  int
 }
 
-type swarmInfoList struct {
-	Infos []swarmInfo
-}
+type swarmDistancesSlice []*swarmDistanceInfo
 
-func (sl *swarmInfoList) Len() int { return len(sl.Infos) }
-func (sl *swarmInfoList) Less(i, j int) bool {
-	return sl.Infos[i].FitScore < sl.Infos[j].FitScore
+func (ss *swarmDistancesSlice) Len() int { return len(*ss) }
+func (ss *swarmDistancesSlice) Less(i, j int) bool {
+	return (*ss)[i].distance < (*ss)[j].distance
 }
-func (sl *swarmInfoList) Swap(i, j int) {
-	sl.Infos[i], sl.Infos[j] = sl.Infos[j], sl.Infos[i]
+func (ss *swarmDistancesSlice) Swap(i, j int) {
+	slice := (*ss)
+	slice[i], slice[j] = slice[j], slice[i]
 }
