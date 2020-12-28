@@ -20,13 +20,13 @@ type DataRequestAnalyzer struct {
 }
 
 func New(sizeTracker SwarmInfoTracker) *DataRequestAnalyzer {
-	analyzer := DataRequestAnalyzer{
+	analyzer := &DataRequestAnalyzer{
 		matchDistances: swarmDistancesSlice(make([]*swarmDistanceInfo, 0)),
 		dMutex:         &sync.Mutex{},
 		sizeTracker:    sizeTracker,
 	}
 	go pollForNewDistances(sizeTracker, &analyzer.matchDistances, analyzer.dMutex)
-	return &analyzer
+	return analyzer
 }
 
 func (da *DataRequestAnalyzer) GetMostNeedy() (string, error) {
@@ -73,13 +73,11 @@ func calculateTransferSize(neg *swarmDistanceInfo, pos *swarmDistanceInfo) int {
 
 func adjustOrdering(container sort.Interface) {
 	length := container.Len()
-	i := 0
-	for ; i < length-1 && !container.Less(0, i); i++ {
+	for i := 0; i < length-2 && !container.Less(i, i+1); i++ {
+		container.Swap(i, i+1)
 	}
-	container.Swap(0, i)
 
-	i = length - 1
-	for ; i >= 0 && !container.Less(i, length-1); i-- {
+	for i := length - 1; i > 0 && !container.Less(i-1, i); i-- {
+		container.Swap(i-1, i)
 	}
-	container.Swap(length-1, i)
 }
