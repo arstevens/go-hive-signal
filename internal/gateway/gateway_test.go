@@ -10,7 +10,7 @@ import (
 
 func TestSwarmGateway(t *testing.T) {
 	fmt.Printf("---------------------------\n    SWARM GATEWAY TEST\n---------------------------\n")
-	dialEndpoint = func(addr string) (Conn, error) {
+	DialEndpoint = func(addr string) (Conn, error) {
 		return &FakeConn{addr: addr, closed: false}, nil
 	}
 
@@ -52,26 +52,11 @@ func TestSwarmGateway(t *testing.T) {
 	}
 	fmt.Printf("\tTotal Connections: active=%d inactive=%d\n", gateway.activeQueue.GetSize(), gateway.inactiveQueue.GetSize())
 
-	fmt.Printf("Evenly splitting swarm...\n")
-	g2, err := gateway.EvenlySplit()
-	if err != nil {
-		t.Fatal(err)
+	fmt.Printf("Outputing all endpoint addrs...\n")
+	addrs := gateway.GetEndpointAddrs()
+	for i := 0; i < len(addrs); i++ {
+		fmt.Printf("\t%s\n", addrs[i])
 	}
-	gateway2 := g2.(*SwarmGateway)
-	fmt.Printf("\t(Original)Total Connections: active=%d inactive=%d\n", gateway.activeQueue.GetSize(), gateway.inactiveQueue.GetSize())
-	fmt.Printf("\t(New)Total Connections: active=%d inactive=%d\n", gateway2.activeQueue.GetSize(), gateway2.inactiveQueue.GetSize())
-
-	fmt.Printf("Merging Original swarm into New swarm...\n")
-	err = gateway2.Merge(gateway)
-	if err != nil {
-		t.Fatal(err)
-	}
-	fmt.Printf("\t(Original)Total Connections: active=%d inactive=%d\n", gateway.activeQueue.GetSize(), gateway.inactiveQueue.GetSize())
-	fmt.Printf("\t(New)Total Connections: active=%d inactive=%d\n", gateway2.activeQueue.GetSize(), gateway2.inactiveQueue.GetSize())
-
-	fmt.Printf("Closing New swarm...\n")
-	gateway2.Close()
-	fmt.Printf("\t(New)Total Connections: active=%d inactive=%d\n", gateway2.activeQueue.GetSize(), gateway2.inactiveQueue.GetSize())
 }
 
 func TestActiveConnectionQueue(t *testing.T) {
