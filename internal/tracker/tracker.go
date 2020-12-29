@@ -12,7 +12,7 @@ type SwarmSizeTracker struct {
 	trackers      map[string]*swarmLoadTracker
 	trackersMutex *sync.Mutex
 	trackMap      map[string]int
-	tMapMutex     *sync.Mutex
+	tMapMutex     *sync.RWMutex
 }
 
 //New creates a new instance of SwarmSizeTracker
@@ -23,7 +23,7 @@ func New(historyLength int) *SwarmSizeTracker {
 		trackers:      make(map[string]*swarmLoadTracker),
 		trackersMutex: &sync.Mutex{},
 		trackMap:      make(map[string]int),
-		tMapMutex:     &sync.Mutex{},
+		tMapMutex:     &sync.RWMutex{},
 	}
 	go calculateFrequencyOnInterval(historyLength, tracker.loadMap, tracker.trackers,
 		tracker.lMapMutex, tracker.trackersMutex)
@@ -48,10 +48,20 @@ func (st *SwarmSizeTracker) GetLoad(dataspace string) int {
 	return 0
 }
 
+func (st *SwarmSizeTracker) GetDataspaces() []string {
+	st.tMapMutex.RLock()
+	dspaces := make([]string, 0, len(st.trackMap))
+	for dspace, _ := range st.trackMap {
+		dspaces = append(dspaces, dspace)
+	}
+	st.tMapMutex.RUnlock()
+	return dspaces
+}
+
 //GetSize returns the recorded size of the 'swarmID'
 func (st *SwarmSizeTracker) GetSize(swarmID string) int {
-	st.tMapMutex.Lock()
-	defer st.tMapMutex.Unlock()
+	st.tMapMutex.RLock()
+	defer st.tMapMutex.RUnlock()
 	if size, ok := st.trackMap[swarmID]; ok {
 		return size
 	}

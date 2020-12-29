@@ -68,12 +68,7 @@ func processRequestStream(requestStream <-chan handle.RequestPair, managers Swar
 }
 
 func handleLocalizeRequest(dataspace string, conn handle.Conn, managers SwarmMap, tracker FrequencyTracker) error {
-	swarmID, err := managers.GetSwarmID(dataspace)
-	if err != nil {
-		return fmt.Errorf("Failed to get Swarm ID associated with dataspace '%s' in RequestLocalizer: %v", dataspace, err)
-	}
-
-	swarmManagerObj, err := managers.GetSwarmManager(swarmID)
+	swarmManagerObj, err := managers.GetSwarm(dataspace)
 	if err != nil {
 		return fmt.Errorf("Failed to get SwarmManager from SwarmMap in RequestLocalizer: %v", err)
 	}

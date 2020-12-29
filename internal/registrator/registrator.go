@@ -7,8 +7,8 @@ import (
 	"github.com/arstevens/go-request/handle"
 )
 
-/*RegistrationHandler is an object that can handle requests that add a dataspace to
-the set of all supported dataspaces for a signaling server*/
+/*RegistrationHandler is an object that can handle requests that add a dataspace or
+origin to the set of all supported by this signaling server*/
 type RegistrationHandler struct {
 	closed        bool
 	requestStream chan<- handle.RequestPair
@@ -80,17 +80,10 @@ func handleRegistrationRequest(request RegistrationRequest, swarmMap SwarmMap, o
 			err = originReg.RemoveOrigin(request.GetDataField())
 		}
 	} else {
-		var swarmID string
 		if request.IsAdd() {
-			swarmID, err = swarmMap.GetMinDataspaceSwarm()
-			if err == nil {
-				err = swarmMap.AddDataspace(swarmID, request.GetDataField())
-			}
+			err = swarmMap.AddSwarm(request.GetDataField())
 		} else {
-			swarmID, err = swarmMap.GetSwarmID(request.GetDataField())
-			if err == nil {
-				err = swarmMap.RemoveDataspace(swarmID, request.GetDataField())
-			}
+			err = swarmMap.RemoveSwarm(request.GetDataField())
 		}
 	}
 

@@ -11,10 +11,8 @@ type OriginRegistrator interface {
 specific swarm as well as having the ability to return the swarm
 with the least number of dataspaces*/
 type SwarmMap interface {
-	GetMinDataspaceSwarm() (string, error)
-	GetSwarmID(string) (string, error)
-	AddDataspace(swarmID string, dataspace string) error
-	RemoveDataspace(swarmID string, dataspace string) error
+	AddSwarm(dataspace string) error
+	RemoveSwarm(dataspace string) error
 }
 
 /* DataspaceRequest describes an object that represents a request

@@ -2,7 +2,6 @@ package registrator
 
 import (
 	"fmt"
-	"math/rand"
 	"strconv"
 	"testing"
 	"time"
@@ -12,17 +11,13 @@ func TestRegistrationHandler(t *testing.T) {
 	dataspaceRequests := 20
 	originRequests := 20
 	preloadDataspaces := 20
-	totalSwarms := 5
 
-	swarms := make([]string, totalSwarms)
-	for i := 0; i < totalSwarms; i++ {
-		swarms[i] = "Swarm#" + strconv.Itoa(i)
-	}
-
-	swarmMap := SwarmMapTest{smap: make(map[string]string)}
+	dspaces := make([]string, preloadDataspaces)
+	swarmMap := SwarmMapTest{smap: make(map[string]bool)}
 	for i := 0; i < preloadDataspaces; i++ {
 		dspace := "/dataspace/" + strconv.Itoa(i)
-		swarmMap.smap[dspace] = swarms[i%totalSwarms]
+		swarmMap.smap[dspace] = true
+		dspaces[i] = dspace
 	}
 	originReg := OriginRegistratorTest{origins: make(map[string]bool)}
 
@@ -72,45 +67,18 @@ func (fc *FakeConn) Write([]byte) (int, error) { return 0, nil }
 func (fc *FakeConn) Close() error              { return nil }
 
 type SwarmMapTest struct {
-	smap map[string]string
+	smap map[string]bool
 }
 
-func (st *SwarmMapTest) GetSwarmID(d string) (string, error) {
-	sm, ok := st.smap[d]
-	if !ok {
-		return "", fmt.Errorf("No swarm associated with name %s", d)
-	}
-	return sm, nil
-}
-
-func (st *SwarmMapTest) AddDataspace(sid string, dspace string) error {
-	fmt.Printf("Adding dataspace %s\n", dspace)
-	st.smap[dspace] = sid
+func (sm *SwarmMapTest) AddSwarm(dspace string) error {
+	sm.smap[dspace] = true
 	return nil
 }
-
-func (st *SwarmMapTest) RemoveDataspace(sid string, dspace string) error {
-	if _, ok := st.smap[dspace]; !ok {
-		return fmt.Errorf("No dataspace with name %s", dspace)
+func (sm *SwarmMapTest) RemoveSwarm(dspace string) error {
+	if _, ok := sm.smap[dspace]; ok {
+		delete(sm.smap, dspace)
 	}
-	fmt.Printf("Removing dataspace %s\n", dspace)
-	delete(st.smap, dspace)
 	return nil
-}
-
-func (st *SwarmMapTest) GetMinDataspaceSwarm() (string, error) {
-	if len(st.smap) == 0 {
-		return "", fmt.Errorf("No dataspaces available")
-	}
-	n := rand.Intn(len(st.smap))
-	i := 0
-	for _, swarm := range st.smap {
-		if i == n {
-			return swarm, nil
-		}
-		i++
-	}
-	return "", nil
 }
 
 type OriginRegistratorTest struct {

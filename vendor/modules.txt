@@ -6,6 +6,12 @@ github.com/arstevens/go-request/handle
 github.com/lib/pq
 github.com/lib/pq/oid
 github.com/lib/pq/scram
+# github.com/petermattis/goid v0.0.0-20180202154549-b0b1615b78e5
+## explicit
+github.com/petermattis/goid
+# github.com/sasha-s/go-deadlock v0.2.0
+## explicit
+github.com/sasha-s/go-deadlock
 # github.com/tsenart/deadcode v0.0.0-20160724212837-210d2dc333e9
 ## explicit
 # github.com/walle/lll v1.0.1

@@ -4,22 +4,17 @@ import (
 	"io"
 )
 
-/*SwarmSizeTracker describes an object that tracks
-the number of members of each swarm*/
-type SwarmSizeTracker interface {
-	GetMostNeedy() (string, error)
-}
-
 /*SwarmMap describes an object that maps Swarm IDs
 to the dataspaces they serve*/
 type SwarmMap interface {
-	GetSwarm(string) (SwarmManager, error)
+	GetSwarm(string) (interface{}, error)
 }
 
 /*SwarmAnalyzer describes an object that can make
 recommendations for how to split/merge swarms*/
 type SwarmAnalyzer interface {
 	CalculateCandidates() ([]Candidate, error)
+	GetMostNeedy() (string, error)
 }
 
 //Candidate describes a split or merge candidate
@@ -30,11 +25,10 @@ type Candidate interface {
 }
 
 type SwarmManager interface {
-	AddEndpointConn(interface{}) error
-	RemoveEndpointConn(interface{}) error
-	AddEndpoint(string) error
-	RemoveEndpoint(string) error
+	AddEndpoint(interface{}) error
+	RemoveEndpoint(interface{}) error
+	TakeEndpoint(string) error
+	DropEndpoint(string) error
 	GetEndpoints() []string
-	SetID(string)
 	io.Closer
 }

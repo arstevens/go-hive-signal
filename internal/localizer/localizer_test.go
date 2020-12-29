@@ -3,7 +3,6 @@ package localizer
 import (
 	"fmt"
 	"math/rand"
-	"strconv"
 	"testing"
 	"time"
 )
@@ -21,7 +20,7 @@ func TestLocalizer(t *testing.T) {
 	smap := SwarmMapTest{smap: make(map[string]SwarmManager)}
 	for i := 0; i < totalDataspaces; i++ {
 		dataspace := fmt.Sprintf("/dataspace/%d", i)
-		smap.smap[dataspace] = &SwarmManagerTest{id: strconv.Itoa(i)}
+		smap.smap[dataspace] = &SwarmManagerTest{id: dataspace}
 	}
 	ftrack := FrequencyTrackerTest{fmap: make(map[string]int)}
 	fconn := FakeConn{}
@@ -46,15 +45,7 @@ type SwarmMapTest struct {
 	smap map[string]SwarmManager
 }
 
-func (st *SwarmMapTest) GetSwarmID(d string) (string, error) {
-	sm, ok := st.smap[d]
-	if !ok {
-		return "", fmt.Errorf("No swarm associated with name %s", d)
-	}
-	return sm.GetID(), nil
-}
-
-func (st *SwarmMapTest) GetSwarmManager(s string) (interface{}, error) {
+func (st *SwarmMapTest) GetSwarm(s string) (interface{}, error) {
 	for _, manager := range st.smap {
 		if manager.GetID() == s {
 			return manager, nil

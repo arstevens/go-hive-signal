@@ -7,14 +7,17 @@ import (
 	"strconv"
 	"sync"
 	"testing"
+	"time"
 
+	"github.com/arstevens/go-hive-signal/internal/analyzer"
 	"github.com/arstevens/go-hive-signal/internal/gateway"
 	"github.com/arstevens/go-hive-signal/internal/manager"
 	"github.com/arstevens/go-hive-signal/internal/negotiator"
 	"github.com/arstevens/go-hive-signal/internal/tracker"
 )
 
-func TestIntegrationOne(t *testing.T) {
+func TestIntegration(t *testing.T) {
+	fmt.Printf("INTEGRATION ONE(SM, SST, SG)\n-------------------------------\n")
 	gatewayActiveSize, gatewayInactiveSize := 10, 20
 	sTracker := tracker.New()
 
@@ -171,6 +174,43 @@ func TestIntegrationOne(t *testing.T) {
 		trackedSize := sTracker.GetSize(id)
 		fmt.Printf("\t%s: %d\n", id, trackedSize)
 	}
+
+	fmt.Printf("\nINTEGRATION TWO(DataRequestAnalyzer)\n-----------------------------------\n")
+	fmt.Printf("Stage One: Creating and linking DataRequestAnalyzer and SwarmSizeTracker...\n")
+	analyzer.OptimalLoadForSize = func(size int) int { return size }
+	analyzer.IncrementModifier = 20
+	analyzer.FrequencyCalculationPeriod = time.Millisecond
+	analyzer.SplitSizeLimit = 10
+	drAnalyzer := analyzer.New(sTracker)
+
+	fmt.Printf("Stage Two: Incrementing DRA frequency counters for swarms...\n")
+	incrementRange := 600
+	totalDspacesPerSwarm := 5
+	for i := 0; i < len(swarms); i++ {
+		swarm := swarms[i]
+		swarmID := swarm.GetID()
+
+		totalIncs := rand.Intn(incrementRange)
+		fmt.Printf("\tIncrements for %s: %d\n", swarmID, totalIncs)
+		for j := 0; j < totalIncs; j++ {
+			dspace := swarmID + "/dataspace/" + strconv.Itoa(rand.Intn(totalDspacesPerSwarm))
+			drAnalyzer.IncrementFrequencyCounter(swarmID, dspace)
+		}
+		time.Sleep(time.Millisecond * 5)
+	}
+
+	fmt.Printf("Stage Three: Running candidate calculations...\n")
+	candidates, err := drAnalyzer.CalculateCandidates()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	for i := 0; i < len(candidates); i++ {
+		candidate := candidates[i]
+		fmt.Printf("\tIsSplit: %t, Swarms: %+v\n", candidate.IsSplit(), candidate.GetSwarmIDs())
+	}
+
+	fmt.Printf("\nINTEGRATION THREE(SwarmTransmuter)\n-----------------------------------\n")
 }
 
 type FakeConn struct {

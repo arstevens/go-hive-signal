@@ -2,7 +2,6 @@ package transmuter
 
 import (
 	"fmt"
-	"math"
 	"math/rand"
 	"strconv"
 	"testing"
@@ -13,7 +12,6 @@ func TestSwarmTransmuter(t *testing.T) {
 	totalSwarms := 5
 	endpointsPerSwarm := 5
 	smap := &TestSwarmMap{managers: make(map[string]SwarmManager)}
-	sizeTracker := &TestSwarmSizeTracker{needs: smap.managers}
 	analyzer := &TestSwarmAnalyzer{smap: smap}
 	for i := 0; i < totalSwarms; i++ {
 		endpoints := make([]string, endpointsPerSwarm)
@@ -27,7 +25,7 @@ func TestSwarmTransmuter(t *testing.T) {
 	printSwarmSizes(smap.managers)
 
 	PollPeriod = time.Second
-	transmuter := New(sizeTracker, smap, analyzer)
+	transmuter := New(smap, analyzer)
 
 	totalConnections := 50
 	for i := 0; i < totalConnections; i++ {
@@ -51,30 +49,11 @@ func printSwarmSizes(m map[string]SwarmManager) {
 	}
 }
 
-type TestSwarmSizeTracker struct {
-	needs map[string]SwarmManager
-}
-
-func (ss *TestSwarmSizeTracker) GetMostNeedy() (string, error) {
-	minID := ""
-	minSize := math.MaxInt32
-	for key, value := range ss.needs {
-		size := len(value.GetEndpoints())
-		if size < minSize {
-			minID, minSize = key, size
-		}
-	}
-	if minID == "" {
-		return "", fmt.Errorf("Failed to retrieve minimum")
-	}
-	return minID, nil
-}
-
 type TestSwarmMap struct {
 	managers map[string]SwarmManager
 }
 
-func (tm *TestSwarmMap) GetSwarm(id string) (SwarmManager, error) {
+func (tm *TestSwarmMap) GetSwarm(id string) (interface{}, error) {
 	if manager, ok := tm.managers[id]; ok {
 		return manager, nil
 	}
@@ -93,6 +72,19 @@ func (tc *TestCandidate) GetTransferSize() int    { return tc.size }
 
 type TestSwarmAnalyzer struct {
 	smap *TestSwarmMap
+}
+
+func (ta *TestSwarmAnalyzer) GetMostNeedy() (string, error) {
+	iterLen := rand.Intn(len(ta.smap.managers))
+	i := 0
+	var id string
+	for id, _ = range ta.smap.managers {
+		if i == iterLen {
+			break
+		}
+		i++
+	}
+	return id, nil
 }
 
 func (ta *TestSwarmAnalyzer) CalculateCandidates() ([]Candidate, error) {
@@ -120,21 +112,20 @@ type TestSwarmManager struct {
 }
 
 func (sm *TestSwarmManager) SetID(string) {}
-func (sm *TestSwarmManager) AddEndpointConn(i interface{}) error {
+func (sm *TestSwarmManager) AddEndpoint(i interface{}) error {
 	c := i.(*FakeConn)
-	return sm.AddEndpoint(c.id)
-	return nil
+	return sm.TakeEndpoint(c.id)
 }
-func (sm *TestSwarmManager) RemoveEndpointConn(i interface{}) error {
+func (sm *TestSwarmManager) RemoveEndpoint(i interface{}) error {
 	c := i.(*FakeConn)
-	return sm.RemoveEndpoint(c.id)
+	return sm.DropEndpoint(c.id)
 }
-func (sm *TestSwarmManager) AddEndpoint(s string) error {
+func (sm *TestSwarmManager) TakeEndpoint(s string) error {
 	sm.endpoints = append(sm.endpoints, s)
 
 	return nil
 }
-func (sm *TestSwarmManager) RemoveEndpoint(s string) error {
+func (sm *TestSwarmManager) DropEndpoint(s string) error {
 	for i := 0; i < len(sm.endpoints); i++ {
 		if sm.endpoints[i] == s {
 			sm.endpoints = append(sm.endpoints[:i], sm.endpoints[i+1:]...)
