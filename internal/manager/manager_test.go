@@ -61,22 +61,11 @@ type testSwarmGateway struct {
 func (sg *testSwarmGateway) GetEndpoint() (Conn, error) {
 	return sg.conn, nil
 }
-func (sg *testSwarmGateway) AddEndpoint(Conn) error {
+func (sg *testSwarmGateway) PushEndpoint(string) error {
 	sg.totalEndpoints++
 	return nil
 }
-func (sg *testSwarmGateway) RetireEndpoint(Conn) error {
-	if sg.totalEndpoints == 0 {
-		return fmt.Errorf("No endpoint to retire")
-	}
-	sg.totalEndpoints--
-	return nil
-}
-func (sg *testSwarmGateway) PushEndpointAddr(string) error {
-	sg.totalEndpoints++
-	return nil
-}
-func (sg *testSwarmGateway) DropEndpointAddr(string) error {
+func (sg *testSwarmGateway) RemoveEndpoint(string) error {
 	if sg.totalEndpoints == 0 {
 		return fmt.Errorf("No endpoint to retire")
 	}
@@ -107,3 +96,5 @@ type FakeConn struct{}
 func (fc *FakeConn) Read([]byte) (int, error)  { return 0, nil }
 func (fc *FakeConn) Write([]byte) (int, error) { return 0, nil }
 func (fc *FakeConn) Close() error              { return nil }
+func (fc *FakeConn) GetAddress() string        { return "" }
+func (fc *FakeConn) IsClosed() bool            { return false }

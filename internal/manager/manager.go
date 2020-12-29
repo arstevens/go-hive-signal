@@ -1,11 +1,14 @@
 package manager
 
 import (
+	"encoding/binary"
 	"fmt"
 	"sync"
 )
 
 var ChangeTriggerLimit int = 20
+var OperationSuccess byte = 1
+var MessageEndian = binary.LittleEndian
 
 /*SwarmManager is an object that can be used to connect new requesters
 to a peer-to-peer swarm*/
@@ -70,7 +73,8 @@ func (sm *SwarmManager) AddEndpoint(c interface{}) error {
 	}
 
 	//Add new endpoint to the gateway structure
-	err = sm.gateway.AddEndpoint(conn)
+	addr := conn.GetAddress()
+	err = sm.gateway.PushEndpoint(addr)
 	if err != nil {
 		return fmt.Errorf("Failed to add endpoint in SwarmManager.AddEndpoint(): %v", err)
 	}
@@ -79,12 +83,17 @@ func (sm *SwarmManager) AddEndpoint(c interface{}) error {
 		sm.tracker.SetSize(sm.id, sm.gateway.GetTotalEndpoints())
 		sm.changes = 0
 	}
+
+	err = binary.Write(conn, MessageEndian, OperationSuccess)
+	if err != nil {
+		return fmt.Errorf("Failed to communicate endpoint addition in SwarmManager.AddEndpoint(): %v", err)
+	}
 	return nil
 }
 
 //TakeEndpoint adds the 'addr' to the backlog of endpoints for the swarm
 func (sm *SwarmManager) TakeEndpoint(addr string) error {
-	err := sm.gateway.PushEndpointAddr(addr)
+	err := sm.gateway.PushEndpoint(addr)
 	if err != nil {
 		err = fmt.Errorf("Failed to take endpoint in SwarmManager.TakeEndpoint(): %v", err)
 	}
@@ -115,7 +124,9 @@ func (sm *SwarmManager) RemoveEndpoint(c interface{}) error {
 	if !ok {
 		return fmt.Errorf("Failed to add endpoint in SwarmManager.RemoveEndpoint(): parameter of wrong type")
 	}
-	err := sm.gateway.RetireEndpoint(conn)
+
+	addr := conn.GetAddress()
+	err := sm.gateway.RemoveEndpoint(addr)
 	if err != nil {
 		return fmt.Errorf("Failed to add endpoint in SwarmManager.RemoveEndpoint(): %v", err)
 	}
@@ -129,7 +140,7 @@ func (sm *SwarmManager) RemoveEndpoint(c interface{}) error {
 
 //DropEndpoint removes 'addr' from the backlog of endpoints in the swarm
 func (sm *SwarmManager) DropEndpoint(addr string) error {
-	err := sm.gateway.DropEndpointAddr(addr)
+	err := sm.gateway.RemoveEndpoint(addr)
 	if err != nil {
 		err = fmt.Errorf("Failed to drop endpoint in SwarmManager.DropEndpoint(): %v", err)
 	}

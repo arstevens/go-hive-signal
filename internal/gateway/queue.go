@@ -1,11 +1,15 @@
 package gateway
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/arstevens/go-hive-signal/internal/manager"
+)
 
 var DefaultQueueCapacity = 100
 
 type activeConnectionQueue struct {
-	queue []Conn
+	queue []manager.Conn
 	head  int
 	tail  int
 	size  int
@@ -17,7 +21,7 @@ func newActiveConnectionQueue(capacity int) *activeConnectionQueue {
 	}
 
 	return &activeConnectionQueue{
-		queue: make([]Conn, capacity),
+		queue: make([]manager.Conn, capacity),
 		head:  0,
 		tail:  0,
 		size:  0,
@@ -35,7 +39,7 @@ func (aq *activeConnectionQueue) Resize(newSize int) error {
 		return nil
 	}
 
-	newQueue := make([]Conn, newSize)
+	newQueue := make([]manager.Conn, newSize)
 	idx := 0
 	for i := aq.head; i != aq.tail; i = (i + 1) % len(aq.queue) {
 		newQueue[idx] = aq.queue[i]
@@ -52,7 +56,7 @@ func (aq *activeConnectionQueue) IsFull() bool {
 	return aq.size == len(aq.queue)
 }
 
-func (aq *activeConnectionQueue) Push(c Conn) error {
+func (aq *activeConnectionQueue) Push(c manager.Conn) error {
 	if aq.IsFull() {
 		return fmt.Errorf("Queue is full in activeConnectionQueue.Push()")
 	}
@@ -62,7 +66,7 @@ func (aq *activeConnectionQueue) Push(c Conn) error {
 	return nil
 }
 
-func (aq *activeConnectionQueue) Pop() Conn {
+func (aq *activeConnectionQueue) Pop() manager.Conn {
 	if aq.size == 0 {
 		return nil
 	}

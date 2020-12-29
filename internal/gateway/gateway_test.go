@@ -6,11 +6,13 @@ import (
 	"strconv"
 	"testing"
 	"time"
+
+	"github.com/arstevens/go-hive-signal/internal/manager"
 )
 
 func TestSwarmGateway(t *testing.T) {
 	fmt.Printf("---------------------------\n    SWARM GATEWAY TEST\n---------------------------\n")
-	DialEndpoint = func(addr string) (Conn, error) {
+	DialEndpoint = func(addr string) (manager.Conn, error) {
 		return &FakeConn{addr: addr, closed: false}, nil
 	}
 
@@ -22,7 +24,7 @@ func TestSwarmGateway(t *testing.T) {
 	fmt.Printf("Populating gateway with %d connections...\n", totalAdds)
 	for i := 0; i < totalAdds; i++ {
 		conn := &FakeConn{addr: "/address/" + strconv.Itoa(i), closed: false}
-		err := gateway.AddEndpoint(conn)
+		err := gateway.PushEndpoint(conn.addr)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -44,7 +46,7 @@ func TestSwarmGateway(t *testing.T) {
 
 	fmt.Printf("Retiring %d endpoints...\n", len(removals))
 	for i := 0; i < len(removals); i++ {
-		err := gateway.RetireEndpoint(removals[i])
+		err := gateway.RemoveEndpoint(removals[i].addr)
 		if err != nil {
 			t.Fatal(err)
 		}

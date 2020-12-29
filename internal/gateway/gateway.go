@@ -11,9 +11,9 @@ import (
 
 var OperationSuccess byte = 1
 var MessageEndian = binary.LittleEndian
-var NewConnWraper func(net.Conn) Conn = nil
+var NewConnWraper func(net.Conn) manager.Conn = nil
 
-var DialEndpoint = func(addr string) (Conn, error) {
+var DialEndpoint = func(addr string) (manager.Conn, error) {
 	conn, err := net.Dial("tcp", addr)
 	if err != nil {
 		return nil, err
@@ -41,39 +41,14 @@ func New(activeSize int, inactiveSize int) *SwarmGateway {
 	}
 }
 
-func (sg *SwarmGateway) AddEndpoint(c manager.Conn) error {
-	defer c.Close()
-	conn := c.(Conn)
-
-	addr := conn.GetAddress()
-	err := binary.Write(conn, MessageEndian, OperationSuccess)
-	if err != nil {
-		return fmt.Errorf("Failed to communicate endpoint addition in SwarmGateway.AddEndpoint(): %v", err)
-	}
+func (sg *SwarmGateway) PushEndpoint(addr string) error {
 	sg.iqMutex.Lock()
 	sg.inactiveQueue.PushNew(addr)
 	sg.iqMutex.Unlock()
 	return nil
 }
 
-func (sg *SwarmGateway) PushEndpointAddr(addr string) error {
-	sg.iqMutex.Lock()
-	sg.inactiveQueue.PushNew(addr)
-	sg.iqMutex.Unlock()
-	return nil
-}
-
-func (sg *SwarmGateway) RetireEndpoint(c manager.Conn) error {
-	defer c.Close()
-	conn := c.(Conn)
-	addr := conn.GetAddress()
-	sg.iqMutex.Lock()
-	sg.inactiveQueue.Remove(addr)
-	sg.iqMutex.Unlock()
-	return nil
-}
-
-func (sg *SwarmGateway) DropEndpointAddr(addr string) error {
+func (sg *SwarmGateway) RemoveEndpoint(addr string) error {
 	sg.iqMutex.Lock()
 	sg.inactiveQueue.Remove(addr)
 	sg.iqMutex.Unlock()
