@@ -14,7 +14,7 @@ func TestManager(t *testing.T) {
 	fmt.Printf("[GENERATING %d SWARMS]\n", totalSwarms)
 	for i := 0; i < totalSwarms; i++ {
 		gateway := &testSwarmGateway{conn: &FakeConn{}, totalEndpoints: rand.Intn(100)}
-		manager := New("/swarm/"+strconv.Itoa(i), gateway, negotiate, tracker)
+		manager := New("/dataspace/"+strconv.Itoa(i), gateway, negotiate, tracker)
 		swarms[i] = manager
 	}
 
@@ -34,33 +34,15 @@ func TestManager(t *testing.T) {
 		if err != nil {
 			panic(err)
 		}
-	}
-
-	fmt.Printf("[RUNNING TRANSMUTATION TESTS]\n")
-	fmt.Printf("Merges\n---------\n")
-	for i := 0; i < totalSwarms/2; i++ {
-		s1 := swarms[i]
-		s2 := swarms[totalSwarms/2+i]
-		fmt.Printf("\tOriginal Sizes: %d %d\n", s1.gateway.GetTotalEndpoints(), s2.gateway.GetTotalEndpoints())
-		err := s1.Stitch(s2)
+		err = swarms[i].TakeEndpoint("")
 		if err != nil {
 			panic(err)
 		}
-		fmt.Printf("\tMerge Size: %d\n", s1.gateway.GetTotalEndpoints())
-	}
-	swarms = swarms[:totalSwarms/2]
-	fmt.Printf("Bisects\n----------\n")
-	for i := 0; i < totalSwarms/2; i++ {
-		s1 := swarms[i]
-		fmt.Printf("\tOriginal Size: %d\n", s1.gateway.GetTotalEndpoints())
-		s2, err := s1.Bisect()
+		err = swarms[i].DropEndpoint("")
 		if err != nil {
 			panic(err)
 		}
-		s := s2.(*SwarmManager)
-		fmt.Printf("\tSplit Sizes: %d %d\n", s1.gateway.GetTotalEndpoints(), s.gateway.GetTotalEndpoints())
 	}
-
 }
 
 type testSwarmTracker struct {
@@ -90,18 +72,26 @@ func (sg *testSwarmGateway) RetireEndpoint(Conn) error {
 	sg.totalEndpoints--
 	return nil
 }
-func (sg *testSwarmGateway) EvenlySplit() (SwarmGateway, error) {
-	sg.totalEndpoints /= 2
-	return &testSwarmGateway{conn: sg.conn, totalEndpoints: sg.totalEndpoints}, nil
+func (sg *testSwarmGateway) PushEndpointAddr(string) error {
+	sg.totalEndpoints++
+	return nil
+}
+func (sg *testSwarmGateway) DropEndpointAddr(string) error {
+	if sg.totalEndpoints == 0 {
+		return fmt.Errorf("No endpoint to retire")
+	}
+	sg.totalEndpoints--
+	return nil
 }
 func (sg *testSwarmGateway) GetTotalEndpoints() int {
 	return sg.totalEndpoints
 }
-func (sg *testSwarmGateway) Merge(g SwarmGateway) error {
-	gway := g.(*testSwarmGateway)
-	sg.totalEndpoints += gway.totalEndpoints
-	gway.Close()
-	return nil
+func (sg *testSwarmGateway) GetEndpointAddrs() []string {
+	addrs := make([]string, sg.totalEndpoints)
+	for i := 0; i < sg.totalEndpoints; i++ {
+		addrs[i] = ""
+	}
+	return addrs
 }
 func (sg *testSwarmGateway) Close() error {
 	sg.totalEndpoints = 0

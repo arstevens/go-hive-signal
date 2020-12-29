@@ -8,9 +8,10 @@ type SwarmGateway interface {
 	AddEndpoint(Conn) error
 	RetireEndpoint(Conn) error
 	GetEndpoint() (Conn, error)
-	EvenlySplit() (SwarmGateway, error)
+	PushEndpointAddr(string) error
+	DropEndpointAddr(string) error
 	GetTotalEndpoints() int
-	Merge(SwarmGateway) error
+	GetEndpointAddrs() []string
 	io.Closer
 }
 

@@ -3,8 +3,6 @@ package manager
 import (
 	"fmt"
 	"sync"
-
-	"github.com/arstevens/go-hive-signal/internal/transmuter"
 )
 
 var ChangeTriggerLimit int = 20
@@ -24,13 +22,12 @@ type SwarmManager struct {
 //New creates a new SwarmManager
 func New(swarmID string, gateway SwarmGateway, negotiate AgentNegotiator, tracker SwarmSizeTracker) *SwarmManager {
 	return &SwarmManager{
-		gateway:     gateway,
-		gatewayLock: &sync.Mutex{},
-		negotiate:   negotiate,
-		tracker:     tracker,
-		closed:      false,
-		id:          swarmID,
-		changes:     0,
+		gateway:   gateway,
+		negotiate: negotiate,
+		tracker:   tracker,
+		closed:    false,
+		id:        swarmID,
+		changes:   0,
 	}
 }
 
@@ -44,9 +41,7 @@ func (sm *SwarmManager) AttemptToPair(conn interface{}) error {
 	if !ok {
 		return fmt.Errorf("Failed to pair in SwarmManager.AttemptToPair(). 'conn' does not conform to Conn interface")
 	}
-	sm.gatewayLock.Lock()
 	offerer, err := sm.gateway.GetEndpoint()
-	sm.gatewayLock.Unlock()
 	if err != nil {
 		return fmt.Errorf("Failed to pair in SwarmManager.AttemptToPair(): %v", err)
 	}
@@ -74,8 +69,6 @@ func (sm *SwarmManager) AddEndpoint(c interface{}) error {
 	}
 
 	//Add new endpoint to the gateway structure
-	sm.gatewayLock.Lock()
-	defer sm.gatewayLock.Unlock()
 	err = sm.gateway.AddEndpoint(conn)
 	if err != nil {
 		return fmt.Errorf("Failed to add endpoint in SwarmManager.AddEndpoint(): %v", err)
@@ -88,10 +81,20 @@ func (sm *SwarmManager) AddEndpoint(c interface{}) error {
 	return nil
 }
 
+func (sm *SwarmManager) TakeEndpoint(addr string) error {
+	err := sm.gateway.PushEndpointAddr(addr)
+	if err != nil {
+		err = fmt.Errorf("Failed to take endpoint in SwarmManager.TakeEndpoint(): %v", err)
+	}
+	return err
+}
+
 func connectForContextRetrieval(conn Conn, negotiate AgentNegotiator, gateway SwarmGateway) error {
 	offerer, err := gateway.GetEndpoint()
 	if err != nil {
-		return fmt.Errorf("Failed to get endpoint in SwarmManager.AddEndpoint(): %v", err)
+		/*If there was an error getting an endpoint thats because the swarm is
+		empty and therefore there is no context to retrieve*/
+		return nil
 	}
 	offererConn, ok := offerer.(Conn)
 	if !ok {
@@ -109,8 +112,6 @@ func (sm *SwarmManager) RemoveEndpoint(c interface{}) error {
 	if !ok {
 		return fmt.Errorf("Failed to add endpoint in SwarmManager.RemoveEndpoint(): parameter of wrong type")
 	}
-	sm.gatewayLock.Lock()
-	defer sm.gatewayLock.Unlock()
 	err := sm.gateway.RetireEndpoint(conn)
 	if err != nil {
 		return fmt.Errorf("Failed to add endpoint in SwarmManager.RemoveEndpoint(): %v", err)
@@ -123,45 +124,21 @@ func (sm *SwarmManager) RemoveEndpoint(c interface{}) error {
 	return nil
 }
 
-func (sm *SwarmManager) Bisect() (transmuter.SwarmManager, error) {
-	sm.gatewayLock.Lock()
-	defer sm.gatewayLock.Unlock()
-	newGateway, err := sm.gateway.EvenlySplit()
+func (sm *SwarmManager) DropEndpoint(addr string) error {
+	err := sm.gateway.DropEndpointAddr(addr)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to bisect in SwarmManager.Bisect(): %v", err)
+		err = fmt.Errorf("Failed to drop endpoint in SwarmManager.DropEndpoint(): %v", err)
 	}
-	sm.tracker.SetSize(sm.id, sm.gateway.GetTotalEndpoints())
-	newManager := New("", newGateway, sm.negotiate, sm.tracker)
-	return newManager, nil
+	return err
 }
 
-func (sm *SwarmManager) Stitch(m transmuter.SwarmManager) error {
-	manager, ok := m.(*SwarmManager)
-	if !ok {
-		return fmt.Errorf("Failed to stitch in SwarmManager.Stitch(): Wrong parameter type")
-	}
-	sm.gatewayLock.Lock()
-	defer sm.gatewayLock.Unlock()
-	err := sm.gateway.Merge(manager.gateway)
-	if err != nil {
-		return fmt.Errorf("Failed to stitch in SwarmManager.Stitch(): %v", err)
-	}
-	sm.tracker.SetSize(sm.id, sm.gateway.GetTotalEndpoints())
-	sm.tracker.SetSize(manager.id, 0)
-	manager.Close()
-	return nil
+func (sm *SwarmManager) GetEndpoints() []string {
+	return sm.gateway.GetEndpointAddrs()
 }
 
 //GetID returns the swarm ID associated with this manager
 func (sm *SwarmManager) GetID() string {
 	return sm.id
-}
-
-func (sm *SwarmManager) SetID(id string) {
-	sm.gatewayLock.Lock()
-	sm.tracker.SetSize(id, sm.gateway.GetTotalEndpoints())
-	sm.gatewayLock.Unlock()
-	sm.id = id
 }
 
 //Close closes the SwarmManager for use
