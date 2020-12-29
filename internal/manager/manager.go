@@ -57,6 +57,7 @@ func (sm *SwarmManager) AttemptToPair(conn interface{}) error {
 	return nil
 }
 
+//AddEndpoint Adds the provided connection to the swarm
 func (sm *SwarmManager) AddEndpoint(c interface{}) error {
 	//Connect new endpoint with old endpoint so that state can be copied over
 	conn, ok := c.(Conn)
@@ -81,6 +82,7 @@ func (sm *SwarmManager) AddEndpoint(c interface{}) error {
 	return nil
 }
 
+//TakeEndpoint adds the 'addr' to the backlog of endpoints for the swarm
 func (sm *SwarmManager) TakeEndpoint(addr string) error {
 	err := sm.gateway.PushEndpointAddr(addr)
 	if err != nil {
@@ -107,6 +109,7 @@ func connectForContextRetrieval(conn Conn, negotiate AgentNegotiator, gateway Sw
 	return nil
 }
 
+//RemoveEndpoint removes the connection 'c' from the swarm
 func (sm *SwarmManager) RemoveEndpoint(c interface{}) error {
 	conn, ok := c.(Conn)
 	if !ok {
@@ -124,6 +127,7 @@ func (sm *SwarmManager) RemoveEndpoint(c interface{}) error {
 	return nil
 }
 
+//DropEndpoint removes 'addr' from the backlog of endpoints in the swarm
 func (sm *SwarmManager) DropEndpoint(addr string) error {
 	err := sm.gateway.DropEndpointAddr(addr)
 	if err != nil {
@@ -132,6 +136,7 @@ func (sm *SwarmManager) DropEndpoint(addr string) error {
 	return err
 }
 
+//GetEndpoints returns a slice of all endpoint addresses
 func (sm *SwarmManager) GetEndpoints() []string {
 	return sm.gateway.GetEndpointAddrs()
 }

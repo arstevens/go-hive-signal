@@ -15,6 +15,12 @@ type SwarmGateway interface {
 	io.Closer
 }
 
+//An object that can create new SwarmGateways
+type SwarmGatewayGenerator interface {
+	New() SwarmGateway
+}
+
+//Defines an object that keeps track of swarm sizes
 type SwarmSizeTracker interface {
 	SetSize(string, int)
 }
