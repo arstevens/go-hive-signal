@@ -116,6 +116,9 @@ type FakeConn struct {
 	tail int
 }
 
+func (fc *FakeConn) GetAddress() string { return "" }
+func (fc *FakeConn) IsClosed() bool     { return false }
+
 func (fc *FakeConn) Read(b []byte) (int, error) {
 	i := 0
 	for ; i < len(b) && i+fc.head < fc.tail; i++ {

@@ -2,6 +2,7 @@ package gateway
 
 import (
 	"fmt"
+	"log"
 	"net"
 	"sync"
 
@@ -104,19 +105,15 @@ func (sg *SwarmGateway) GetEndpointAddrs() []string {
 	sg.aqMutex.Lock()
 
 	iqSize := sg.inactiveQueue.GetSize()
-	aqSize := sg.activeQueue.GetSize()
-	addrs := make([]string, iqSize+aqSize)
+	addrs := make([]string, iqSize)
 
 	i := 0
 	for _, entry := range *sg.inactiveQueue.pq {
 		addrs[i] = entry.address
 		i++
 	}
-	for _, conn := range sg.activeQueue.queue {
-		fmt.Printf("%d/%d\n", i, len(addrs))
-		addrs[i] = conn.GetAddress()
-		i++
-	}
+	activeAddrs := sg.activeQueue.GetAddrs()
+	addrs = append(addrs, activeAddrs...)
 
 	sg.iqMutex.Unlock()
 	sg.aqMutex.Unlock()
@@ -143,7 +140,8 @@ func (sg *SwarmGateway) populateActiveQueue() error {
 	sg.iqMutex.Lock()
 	defer sg.iqMutex.Unlock()
 	if sg.inactiveQueue.IsEmpty() {
-		return fmt.Errorf("InactiveQueue is empty")
+		log.Println("SwarmGateway.populateActiveQueue(): InactiveQueue is empty")
+		return nil
 	}
 
 	sg.aqMutex.Lock()

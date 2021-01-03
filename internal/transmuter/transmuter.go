@@ -2,6 +2,7 @@ package transmuter
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/arstevens/go-request/handle"
 )
@@ -34,7 +35,11 @@ func (st *SwarmTransmuter) ProcessConnection(dataspaceID string, code int, conn 
 	if code == SwarmConnect {
 		needyID, err := st.analyzer.GetMostNeedy()
 		if err != nil {
-			return fmt.Errorf(transmuterFailFormat, err)
+			/*No swarms in need to a new endpoint so drop connection.
+			In reality this only happens when the analyzer has yet to
+			run it's first swarm analysis or if no swarms are registered*/
+			log.Printf(transmuterFailFormat, err)
+			return nil
 		}
 		m, err := st.swarmMap.GetSwarm(needyID)
 		if err != nil {

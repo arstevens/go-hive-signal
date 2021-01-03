@@ -25,6 +25,7 @@ type SwarmManager struct {
 
 //New creates a new SwarmManager
 func New(swarmID string, gateway SwarmGateway, negotiate AgentNegotiator, tracker SwarmSizeTracker) *SwarmManager {
+	tracker.SetSize(swarmID, gateway.GetTotalEndpoints())
 	return &SwarmManager{
 		gateway:   gateway,
 		negotiate: negotiate,

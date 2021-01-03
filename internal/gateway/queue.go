@@ -31,6 +31,14 @@ func newActiveConnectionQueue(capacity int) *activeConnectionQueue {
 func (aq *activeConnectionQueue) IsEmpty() bool    { return aq.size == 0 }
 func (aq *activeConnectionQueue) GetCapacity() int { return len(aq.queue) }
 func (aq *activeConnectionQueue) GetSize() int     { return aq.size }
+func (aq *activeConnectionQueue) GetAddrs() []string {
+	addrs := make([]string, aq.size)
+	for i := 0; i < aq.size; i++ {
+		c := aq.queue[(aq.head+i)%len(aq.queue)]
+		addrs[i] = c.GetAddress()
+	}
+	return addrs
+}
 
 func (aq *activeConnectionQueue) Resize(newSize int) error {
 	if newSize < aq.size {
