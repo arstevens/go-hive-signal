@@ -1,7 +1,6 @@
 package gateway
 
 import (
-	"encoding/binary"
 	"fmt"
 	"net"
 	"sync"
@@ -9,8 +8,6 @@ import (
 	"github.com/arstevens/go-hive-signal/internal/manager"
 )
 
-var OperationSuccess byte = 1
-var MessageEndian = binary.LittleEndian
 var NewConnWraper func(net.Conn) manager.Conn = nil
 
 var DialEndpoint = func(addr string) (manager.Conn, error) {
@@ -116,6 +113,7 @@ func (sg *SwarmGateway) GetEndpointAddrs() []string {
 		i++
 	}
 	for _, conn := range sg.activeQueue.queue {
+		fmt.Printf("%d/%d\n", i, len(addrs))
 		addrs[i] = conn.GetAddress()
 		i++
 	}

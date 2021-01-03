@@ -51,7 +51,7 @@ func (st *SwarmSizeTracker) GetLoad(dataspace string) int {
 func (st *SwarmSizeTracker) GetDataspaces() []string {
 	st.tMapMutex.RLock()
 	dspaces := make([]string, 0, len(st.trackMap))
-	for dspace, _ := range st.trackMap {
+	for dspace, _ := range st.trackers {
 		dspaces = append(dspaces, dspace)
 	}
 	st.tMapMutex.RUnlock()

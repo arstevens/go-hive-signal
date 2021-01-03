@@ -71,9 +71,9 @@ type FrequencyTrackerTest struct {
 	fmap map[string]int
 }
 
-func (ft *FrequencyTrackerTest) IncrementFrequency(dataspace string, s string) {
-	ft.fmap[s]++
-	fmt.Printf("Swarm %s incremented to %d\n", s, ft.fmap[s])
+func (ft *FrequencyTrackerTest) IncrementFrequencyCounter(dataspace string) {
+	ft.fmap[dataspace]++
+	fmt.Printf("Swarm %s incremented to %d\n", dataspace, ft.fmap[dataspace])
 }
 
 type LocalizeRequestTest struct {

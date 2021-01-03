@@ -32,7 +32,7 @@ func New(sizeTracker SwarmInfoTracker) *DataRequestAnalyzer {
 func (da *DataRequestAnalyzer) GetMostNeedy() (string, error) {
 	da.dMutex.Lock()
 	defer da.dMutex.Unlock()
-	if da.matchDistances.Len() > 0 && da.matchDistances[0].distance < 0 {
+	if da.matchDistances.Len() > 0 {
 		return da.matchDistances[0].dataspace, nil
 	}
 	return "", fmt.Errorf("Could not retrieve most needy swarm in DataRequestAnalyzer.GetMostNeedy()")

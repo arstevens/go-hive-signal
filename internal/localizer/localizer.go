@@ -77,6 +77,6 @@ func handleLocalizeRequest(dataspace string, conn handle.Conn, managers SwarmMap
 	if err != nil {
 		return fmt.Errorf("Failed to pair to swarm in RequestLocalizer: %v", err)
 	}
-	tracker.IncrementFrequency(dataspace, swarmManager.GetID())
+	tracker.IncrementFrequencyCounter(dataspace)
 	return nil
 }

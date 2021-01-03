@@ -16,7 +16,7 @@ type SwarmMap interface {
 /*FrequencyTracker defines an object that needs to be informed when a new request
 comes in in order to keep track of the frequency of requests per dataspace and swarm*/
 type FrequencyTracker interface {
-	IncrementFrequency(dataspace string, swarmID string)
+	IncrementFrequencyCounter(dataspace string)
 }
 
 /*LocalizeRequest defines an object that holds the information needed for the localizer

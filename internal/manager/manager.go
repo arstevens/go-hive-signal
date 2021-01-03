@@ -3,6 +3,7 @@ package manager
 import (
 	"encoding/binary"
 	"fmt"
+	"log"
 	"sync"
 )
 
@@ -46,7 +47,8 @@ func (sm *SwarmManager) AttemptToPair(conn interface{}) error {
 	}
 	offerer, err := sm.gateway.GetEndpoint()
 	if err != nil {
-		return fmt.Errorf("Failed to pair in SwarmManager.AttemptToPair(): %v", err)
+		log.Printf("Failed to pair in SwarmManager.AttemptToPair(): %v", err)
+		return nil
 	}
 	offererConn, ok := offerer.(Conn)
 	if !ok {
