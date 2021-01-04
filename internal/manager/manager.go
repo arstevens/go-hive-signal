@@ -81,11 +81,7 @@ func (sm *SwarmManager) AddEndpoint(c interface{}) error {
 	if err != nil {
 		return fmt.Errorf("Failed to add endpoint in SwarmManager.AddEndpoint(): %v", err)
 	}
-	sm.changes++
-	if sm.changes > ChangeTriggerLimit {
-		sm.tracker.SetSize(sm.id, sm.gateway.GetTotalEndpoints())
-		sm.changes = 0
-	}
+	sm.incrementChanges()
 
 	err = binary.Write(conn, MessageEndian, OperationSuccess)
 	if err != nil {
@@ -98,9 +94,10 @@ func (sm *SwarmManager) AddEndpoint(c interface{}) error {
 func (sm *SwarmManager) TakeEndpoint(addr string) error {
 	err := sm.gateway.PushEndpoint(addr)
 	if err != nil {
-		err = fmt.Errorf("Failed to take endpoint in SwarmManager.TakeEndpoint(): %v", err)
+		return fmt.Errorf("Failed to take endpoint in SwarmManager.TakeEndpoint(): %v", err)
 	}
-	return err
+	sm.incrementChanges()
+	return nil
 }
 
 func connectForContextRetrieval(conn Conn, negotiate AgentNegotiator, gateway SwarmGateway) error {
@@ -133,11 +130,7 @@ func (sm *SwarmManager) RemoveEndpoint(c interface{}) error {
 	if err != nil {
 		return fmt.Errorf("Failed to add endpoint in SwarmManager.RemoveEndpoint(): %v", err)
 	}
-	sm.changes++
-	if sm.changes > ChangeTriggerLimit {
-		sm.tracker.SetSize(sm.id, sm.gateway.GetTotalEndpoints())
-		sm.changes = 0
-	}
+	sm.incrementChanges()
 	return nil
 }
 
@@ -145,9 +138,10 @@ func (sm *SwarmManager) RemoveEndpoint(c interface{}) error {
 func (sm *SwarmManager) DropEndpoint(addr string) error {
 	err := sm.gateway.RemoveEndpoint(addr)
 	if err != nil {
-		err = fmt.Errorf("Failed to drop endpoint in SwarmManager.DropEndpoint(): %v", err)
+		return fmt.Errorf("Failed to drop endpoint in SwarmManager.DropEndpoint(): %v", err)
 	}
-	return err
+	sm.incrementChanges()
+	return nil
 }
 
 //GetEndpoints returns a slice of all endpoint addresses
@@ -168,4 +162,12 @@ func (sm *SwarmManager) Close() error {
 	sm.gateway.Close()
 	sm.closed = true
 	return nil
+}
+
+func (sm *SwarmManager) incrementChanges() {
+	sm.changes++
+	if sm.changes > ChangeTriggerLimit {
+		sm.tracker.SetSize(sm.id, sm.gateway.GetTotalEndpoints())
+		sm.changes = 0
+	}
 }

@@ -158,7 +158,6 @@ func TestRequestLocalizerSubtree(t *testing.T) {
 	//State output
 	fmt.Printf("Outputing server state...\n")
 	fmt.Printf("Tracker output\n")
-	fmt.Printf("%v\n", infoTracker.GetDataspaces())
 	for _, dspace := range dataspaces {
 		load := infoTracker.GetLoad(dspace)
 		tsize := infoTracker.GetSize(dspace)
