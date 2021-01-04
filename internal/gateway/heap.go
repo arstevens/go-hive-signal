@@ -94,5 +94,6 @@ func (eq *endpointPriorityQueue) Pop() (string, int) {
 func (eq *endpointPriorityQueue) Remove(address string) {
 	if index, ok := eq.indexMap[address]; ok {
 		heap.Remove(eq.pq, *index)
+		delete(eq.indexMap, address)
 	}
 }

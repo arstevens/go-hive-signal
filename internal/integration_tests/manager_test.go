@@ -20,9 +20,15 @@ import (
 func TestRequestLocalizerSubtree(t *testing.T) {
 	fmt.Printf("\nREQUEST LOCALIZER SUBTREE\n----------------------\n")
 	//Prepare environment
-	analyzer.OptimalSizeForLoad = func(s int) int { return s }
+	analyzer.OptimalSizeForLoad = func(s int) int {
+		if s%2 == 0 {
+			return s * 20
+		}
+		return s
+	}
 	analyzer.DistancePollTime = time.Millisecond * 10
 	tracker.FrequencyCalculationPeriod = time.Second //time.Millisecond * 50
+	transmuter.PollPeriod = time.Second
 	gateway.DialEndpoint = func(addr string) (manager.Conn, error) {
 		return &FakeConn{
 			addr:   addr,
@@ -124,7 +130,7 @@ func TestRequestLocalizerSubtree(t *testing.T) {
 
 	//Start data requests
 	requestDone := make(chan struct{})
-	requestFrequency := time.Millisecond / 10
+	requestFrequency := time.Millisecond
 	requestIterations := int((totalRuntime - tracker.FrequencyCalculationPeriod) / requestFrequency)
 	fmt.Printf("Starting pairing requests...\n")
 	go func() {
@@ -152,6 +158,7 @@ func TestRequestLocalizerSubtree(t *testing.T) {
 	//State output
 	fmt.Printf("Outputing server state...\n")
 	fmt.Printf("Tracker output\n")
+	fmt.Printf("%v\n", infoTracker.GetDataspaces())
 	for _, dspace := range dataspaces {
 		load := infoTracker.GetLoad(dspace)
 		tsize := infoTracker.GetSize(dspace)

@@ -44,6 +44,10 @@ func (da *DataRequestAnalyzer) CalculateCandidates() ([]transmuter.Candidate, er
 
 	candidates := make([]transmuter.Candidate, 0)
 	distances := da.matchDistances
+	fmt.Println("-------")
+	for i := 0; i < distances.Len(); i++ {
+		fmt.Printf("%s %d\n", distances[i].dataspace, distances[i].distance)
+	}
 	size := distances.Len()
 
 	head, tail := distances[0], distances[size-1]
@@ -60,6 +64,11 @@ func (da *DataRequestAnalyzer) CalculateCandidates() ([]transmuter.Candidate, er
 		adjustOrdering(&distances)
 		head, tail = distances[0], distances[size-1]
 	}
+	for i := 0; i < len(candidates); i++ {
+		fmt.Printf("Candidate: %s %s %d\n", candidates[i].GetTransfererID(), candidates[i].GetTransfereeID(), candidates[i].GetTransferSize())
+	}
+	fmt.Println("-------")
+
 	return candidates, nil
 }
 

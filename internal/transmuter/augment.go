@@ -24,6 +24,7 @@ func pollForTransmutation(swarmMap SwarmMap, analyzer SwarmAnalyzer) {
 		time.Sleep(PollPeriod)
 		candidates, err := analyzer.CalculateCandidates()
 		if err != nil {
+			log.Println(err)
 			return
 		}
 
