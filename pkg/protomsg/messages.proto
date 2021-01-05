@@ -2,23 +2,25 @@ syntax = "proto3";
 package protomsg;
 
 message LocalizeRequest {
-  int32 type = 1;
-  string dataspace = 2;
+  string dataspace = 1;
 }
 
 message RegistrationRequest {
-  int32 type = 1;
-  bool isAdd = 2;
-  bool isOrigin = 3;
-  string datafield = 4;
+  bool isAdd = 1;
+  bool isOrigin = 2;
+  string datafield = 3;
 }
 
 message ConnectionRequest {
+  int32 requestCode = 1;
+  bool isLogOn = 2;
+  string swarmID = 3;
+  string originID = 4;
+}
+
+message RouterWrapper {
   int32 type = 1;
-  int32 requestCode = 2;
-  bool isLogOn = 3;
-  string swarmID = 4;
-  string originID = 5;
+  bytes request = 2;
 }
 
 message NegotiateMessage {

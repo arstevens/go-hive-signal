@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"math/rand"
-	"net"
 	"os"
 	"testing"
 	"time"
@@ -358,15 +357,3 @@ func (or *TestOriginRegistrator) RemoveOrigin(string) error { return nil }
 type TestLocalizeRequest string
 
 func (lr *TestLocalizeRequest) GetDataspace() string { return string(*lr) }
-
-type FakeConn struct {
-	addr   string
-	closed bool
-}
-
-func (fc *FakeConn) GetIP() net.IP             { return net.ParseIP(fc.addr) }
-func (fc *FakeConn) Read([]byte) (int, error)  { return 0, nil }
-func (fc *FakeConn) Write([]byte) (int, error) { return 0, nil }
-func (fc *FakeConn) Close() error              { fc.closed = true; return nil }
-func (fc *FakeConn) IsClosed() bool            { return fc.closed }
-func (fc *FakeConn) GetAddress() string        { return fc.addr }

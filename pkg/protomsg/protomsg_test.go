@@ -8,7 +8,7 @@ import (
 func TestProtomsg(t *testing.T) {
 	fmt.Printf("Testing LocalizerRequest\n")
 	fmt.Printf("\tcreating new request...")
-	lRequest, err := NewLocalizeRequest("/dataspace/TEST", 1)
+	lRequest, err := NewLocalizeRequest("/dataspace/TEST")
 	if err != nil {
 		fmt.Printf("failed\n")
 		panic(err)
@@ -16,7 +16,7 @@ func TestProtomsg(t *testing.T) {
 	fmt.Printf("success\n")
 
 	fmt.Printf("\tunmarshaling request...")
-	_, err = UnpackLocalizeRequest(lRequest, &FakeConn{})
+	_, err = UnpackLocalizeRequest(lRequest)
 	if err != nil {
 		fmt.Printf("failed\n")
 		panic(err)
@@ -25,7 +25,7 @@ func TestProtomsg(t *testing.T) {
 
 	fmt.Printf("Testing RegistrationRequest\n")
 	fmt.Printf("\tcreating new request...")
-	rRequest, err := NewRegistrationRequest(true, true, "DATA", 1)
+	rRequest, err := NewRegistrationRequest(true, true, "DATA")
 	if err != nil {
 		fmt.Printf("failed\n")
 		panic(err)
@@ -33,7 +33,7 @@ func TestProtomsg(t *testing.T) {
 	fmt.Printf("success\n")
 
 	fmt.Printf("\tunmarshaling request...")
-	_, err = UnpackRegistrationRequest(rRequest, &FakeConn{})
+	_, err = UnpackRegistrationRequest(rRequest)
 	if err != nil {
 		fmt.Printf("failed\n")
 		panic(err)
@@ -42,7 +42,7 @@ func TestProtomsg(t *testing.T) {
 
 	fmt.Printf("Testing ConnectionRequest\n")
 	fmt.Printf("\tcreating new request...")
-	cRequest, err := NewConnectionRequest(true, "/swarm/TEST", "/origin/TEST", 1, 1)
+	cRequest, err := NewConnectionRequest(true, "/swarm/TEST", "/origin/TEST", 1)
 	if err != nil {
 		fmt.Printf("failed\n")
 		panic(err)
@@ -50,7 +50,7 @@ func TestProtomsg(t *testing.T) {
 	fmt.Printf("success\n")
 
 	fmt.Printf("\tunmarshaling request...")
-	_, err = UnpackConnectionRequest(cRequest, &FakeConn{})
+	_, err = UnpackConnectionRequest(cRequest)
 	if err != nil {
 		fmt.Printf("failed\n")
 		panic(err)

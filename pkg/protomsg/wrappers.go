@@ -1,5 +1,9 @@
 package protomsg
 
+type PBRouteWrapper struct {
+	request *RouterWrapper
+}
+
 type PBLocalizeRequest struct {
 	request *LocalizeRequest
 }
@@ -8,16 +12,8 @@ func (lr *PBLocalizeRequest) GetDataspace() string {
 	return lr.request.GetDataspace()
 }
 
-func (lr *PBLocalizeRequest) GetType() int {
-	return int(lr.request.GetType())
-}
-
 type PBRegistrationRequest struct {
 	request *RegistrationRequest
-}
-
-func (rr *PBRegistrationRequest) GetType() int {
-	return int(rr.request.GetType())
 }
 
 func (rr *PBRegistrationRequest) IsAdd() bool {
@@ -34,10 +30,6 @@ func (rr *PBRegistrationRequest) GetDataField() string {
 
 type PBConnectionRequest struct {
 	request *ConnectionRequest
-}
-
-func (cr *PBConnectionRequest) GetType() int {
-	return int(cr.request.GetType())
 }
 
 func (cr *PBConnectionRequest) IsLogOn() bool {
