@@ -1,16 +1,11 @@
-2021/01/03 16:55:18 Failed to process connection in SwarmTransmuter: Could not retrieve most needy swarm in DataRequestAnalyzer.GetMostNeedy()
-2021/01/03 16:55:18 Failed to process connection in SwarmTransmuter: Could not retrieve most needy swarm in DataRequestAnalyzer.GetMostNeedy()
-2021/01/03 16:55:18 Failed to process connection in SwarmTransmuter: Could not retrieve most needy swarm in DataRequestAnalyzer.GetMostNeedy()
-2021/01/03 16:55:18 Failed to process connection in SwarmTransmuter: Could not retrieve most needy swarm in DataRequestAnalyzer.GetMostNeedy()
-2021/01/03 16:55:18 Failed to process connection in SwarmTransmuter: Could not retrieve most needy swarm in DataRequestAnalyzer.GetMostNeedy()
-2021/01/03 16:55:18 Failed to process connection in SwarmTransmuter: Could not retrieve most needy swarm in DataRequestAnalyzer.GetMostNeedy()
-2021/01/03 16:55:18 SwarmGateway.populateActiveQueue(): InactiveQueue is empty
-2021/01/03 16:55:18 SwarmGateway.populateActiveQueue(): InactiveQueue is empty
-2021/01/03 16:55:18 SwarmGateway.populateActiveQueue(): InactiveQueue is empty
-2021/01/03 16:55:18 SwarmGateway.populateActiveQueue(): InactiveQueue is empty
-2021/01/03 16:55:18 SwarmGateway.populateActiveQueue(): InactiveQueue is empty
-2021/01/03 16:55:18 SwarmGateway.populateActiveQueue(): InactiveQueue is empty
-2021/01/03 16:55:18 SwarmGateway.populateActiveQueue(): InactiveQueue is empty
-2021/01/03 16:55:18 SwarmGateway.populateActiveQueue(): InactiveQueue is empty
-2021/01/03 16:55:18 SwarmGateway.populateActiveQueue(): InactiveQueue is empty
-2021/01/03 16:55:18 SwarmGateway.populateActiveQueue(): InactiveQueue is empty
+2021/01/04 17:29:31 SwarmGateway.populateActiveQueue(): InactiveQueue is empty
+2021/01/04 17:29:31 Failed to handle registration request in RegistrationHandler: Failed to add origin in EndpointRegistrationDatabase.AddOrigin(): Origin /origin/9 already exists
+2021/01/04 17:29:31 SwarmGateway.populateActiveQueue(): InactiveQueue is empty
+2021/01/04 17:29:31 SwarmGateway.populateActiveQueue(): InactiveQueue is empty
+2021/01/04 17:29:31 SwarmGateway.populateActiveQueue(): InactiveQueue is empty
+2021/01/04 17:29:31 SwarmGateway.populateActiveQueue(): InactiveQueue is empty
+2021/01/04 17:29:31 SwarmGateway.populateActiveQueue(): InactiveQueue is empty
+2021/01/04 17:29:31 SwarmGateway.populateActiveQueue(): InactiveQueue is empty
+2021/01/04 17:29:31 SwarmGateway.populateActiveQueue(): InactiveQueue is empty
+2021/01/04 17:29:31 SwarmGateway.populateActiveQueue(): InactiveQueue is empty
+2021/01/04 17:29:31 SwarmGateway.populateActiveQueue(): InactiveQueue is empty

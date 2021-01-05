@@ -4,18 +4,76 @@ import (
 	"fmt"
 	"log"
 	"math/rand"
+	"net"
 	"os"
 	"testing"
 	"time"
 
 	"github.com/arstevens/go-hive-signal/internal/analyzer"
+	"github.com/arstevens/go-hive-signal/internal/cache"
+	"github.com/arstevens/go-hive-signal/internal/connector"
 	"github.com/arstevens/go-hive-signal/internal/gateway"
 	"github.com/arstevens/go-hive-signal/internal/localizer"
 	"github.com/arstevens/go-hive-signal/internal/manager"
 	"github.com/arstevens/go-hive-signal/internal/mapper"
+	"github.com/arstevens/go-hive-signal/internal/register"
+	"github.com/arstevens/go-hive-signal/internal/registrator"
 	"github.com/arstevens/go-hive-signal/internal/tracker"
 	"github.com/arstevens/go-hive-signal/internal/transmuter"
+	"github.com/arstevens/go-hive-signal/internal/verifier"
 )
+
+/*
+func TestIdentityVerifier(t *testing.T) {
+	endpointRegister, err := register.New()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	totalOrigins := 10
+	origins := make([]string, totalOrigins)
+	for i := 0; i < totalOrigins; i++ {
+		id := "/origin/" + strconv.Itoa(i)
+		err = endpointRegister.AddOrigin(id)
+		if err != nil {
+			t.Fatal(err)
+		}
+		origins[i] = id
+	}
+
+	cache.GarbageCollectionPeriod = time.Millisecond * 3
+	cache.ConnectionTTL = time.Millisecond * 4
+	cache.DisconnectionTTL = time.Millisecond * 4
+	connectionCache := cache.New()
+	identityVerifier := verifier.New(endpointRegister, connectionCache)
+
+	totalIPs := 10
+	ips := make([]net.IP, totalIPs)
+	for i := 0; i < totalIPs; i++ {
+		ip := net.IPv4(byte(rand.Intn(256)), byte(rand.Intn(256)),
+			byte(rand.Intn(256)), byte(rand.Intn(256)))
+		ips[i] = ip
+	}
+
+	totalConnections := 20
+	for i := 0; i < totalConnections; i++ {
+		time.Sleep(time.Millisecond)
+		idx := rand.Intn(totalIPs)
+		ip := ips[idx]
+
+		isLogOn := rand.Intn(10) > 5
+		isValid := identityVerifier.Analyze(ip, origins[0], isLogOn)
+		fmt.Printf("IsLogOn: %t, IP: %s, IsValid: %t\n", isLogOn, ip.String(), isValid)
+	}
+
+	for _, origin := range origins {
+		err = endpointRegister.RemoveOrigin(origin)
+		if err != nil {
+			log.Printf("%v\n", err)
+		}
+	}
+}
+*/
 
 func TestRequestLocalizerSubtree(t *testing.T) {
 	fmt.Printf("\nREQUEST LOCALIZER SUBTREE\n----------------------\n")
@@ -60,8 +118,21 @@ func TestRequestLocalizerSubtree(t *testing.T) {
 	dataRequestAnalyzer := analyzer.New(infoTracker)
 	swarmTransmuter := transmuter.New(swarmMap, dataRequestAnalyzer)
 
-	localizerSize := 10
-	requestLocalizer := localizer.New(localizerSize, swarmMap, infoTracker)
+	requestBufferSize := 10
+	requestLocalizer := localizer.New(requestBufferSize, swarmMap, infoTracker)
+
+	endpointRegister, err := register.New()
+	if err != nil {
+		t.Fatal(err)
+	}
+	registrationHandler := registrator.New(requestBufferSize, swarmMap, endpointRegister)
+
+	cache.GarbageCollectionPeriod = time.Millisecond * 50
+	cache.ConnectionTTL = time.Second
+	cache.DisconnectionTTL = time.Second
+	connectionCache := cache.New()
+	identityVerifier := verifier.New(endpointRegister, connectionCache)
+	connectionHandler := connector.New(requestBufferSize, identityVerifier, swarmTransmuter)
 
 	//Register dataspaces
 	totalDataspaces := 10
@@ -71,7 +142,31 @@ func TestRequestLocalizerSubtree(t *testing.T) {
 	for i := 0; i < totalDataspaces; i++ {
 		dataspaces[i] = fmt.Sprintf("/dataspace/%d", i)
 		endpointSet[dataspaces[i]] = make(map[string]bool)
-		err = swarmMap.AddSwarm(dataspaces[i])
+
+		registrationRequest := &TestRegistrationRequest{
+			add:    true,
+			origin: false,
+			field:  dataspaces[i],
+		}
+
+		err = registrationHandler.AddJob(registrationRequest, &FakeConn{})
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	totalOrigins := 10
+	fmt.Printf("Registering %d points of origin...\n", totalOrigins)
+	origins := make([]string, totalOrigins)
+	for i := 0; i < totalOrigins; i++ {
+		origins[i] = fmt.Sprintf("/origin/%d", i)
+
+		registrationRequest := &TestRegistrationRequest{
+			add:    true,
+			origin: true,
+			field:  origins[i],
+		}
+		err = registrationHandler.AddJob(registrationRequest, &FakeConn{})
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -103,7 +198,14 @@ func TestRequestLocalizerSubtree(t *testing.T) {
 					closed: false,
 				}
 				endpointSet[dataspace][conn.addr] = true
-				err = swarmTransmuter.ProcessConnection(dataspace, transmuter.SwarmConnect, conn)
+
+				connectionRequest := &TestConnectionRequest{
+					code:     transmuter.SwarmConnect,
+					swarmID:  dataspace,
+					originID: origins[0],
+					isLogOn:  true,
+				}
+				err = connectionHandler.AddJob(connectionRequest, conn)
 				if err != nil {
 					fmt.Printf("%v\n", err)
 					t.Fatal(err)
@@ -119,7 +221,13 @@ func TestRequestLocalizerSubtree(t *testing.T) {
 					addr:   endpoint,
 					closed: false,
 				}
-				err = swarmTransmuter.ProcessConnection(dataspace, transmuter.SwarmDisconnect, conn)
+				disconnectionRequest := &TestConnectionRequest{
+					code:     transmuter.SwarmDisconnect,
+					swarmID:  dataspace,
+					originID: origins[0],
+					isLogOn:  false,
+				}
+				err = connectionHandler.AddJob(disconnectionRequest, conn)
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -166,6 +274,34 @@ func TestRequestLocalizerSubtree(t *testing.T) {
 		size := len(man.GetEndpoints())
 		fmt.Printf("\t%s Load->%d TSize->%d Size->%d\n", dspace, load, tsize, size)
 	}
+
+	var fatalErr error
+	for _, origin := range origins {
+		registrationRequest := &TestRegistrationRequest{
+			add:    false,
+			origin: true,
+			field:  origin,
+		}
+		err = registrationHandler.AddJob(registrationRequest, &FakeConn{})
+		if err != nil {
+			fatalErr = err
+			log.Printf("%v\n", err)
+		}
+	}
+	if fatalErr != nil {
+		t.Fatal(err)
+	}
+	for _, dspace := range dataspaces {
+		registrationRequest := &TestRegistrationRequest{
+			add:    false,
+			origin: false,
+			field:  dspace,
+		}
+		err = registrationHandler.AddJob(registrationRequest, &FakeConn{})
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
 }
 
 func getEndpointAndRemove(dspace string, m map[string]map[string]bool) string {
@@ -192,6 +328,33 @@ func getEndpointAndRemove(dspace string, m map[string]map[string]bool) string {
 	return endpoint
 }
 
+type TestConnectionRequest struct {
+	code     int
+	swarmID  string
+	originID string
+	isLogOn  bool
+}
+
+func (cr *TestConnectionRequest) GetRequestCode() int { return cr.code }
+func (cr *TestConnectionRequest) GetSwarmID() string  { return cr.swarmID }
+func (cr *TestConnectionRequest) GetOriginID() string { return cr.originID }
+func (cr *TestConnectionRequest) IsLogOn() bool       { return cr.isLogOn }
+
+type TestRegistrationRequest struct {
+	add    bool
+	origin bool
+	field  string
+}
+
+func (rr *TestRegistrationRequest) IsAdd() bool          { return rr.add }
+func (rr *TestRegistrationRequest) IsOrigin() bool       { return rr.origin }
+func (rr *TestRegistrationRequest) GetDataField() string { return rr.field }
+
+type TestOriginRegistrator struct{}
+
+func (or *TestOriginRegistrator) AddOrigin(string) error    { return nil }
+func (or *TestOriginRegistrator) RemoveOrigin(string) error { return nil }
+
 type TestLocalizeRequest string
 
 func (lr *TestLocalizeRequest) GetDataspace() string { return string(*lr) }
@@ -201,6 +364,7 @@ type FakeConn struct {
 	closed bool
 }
 
+func (fc *FakeConn) GetIP() net.IP             { return net.ParseIP(fc.addr) }
 func (fc *FakeConn) Read([]byte) (int, error)  { return 0, nil }
 func (fc *FakeConn) Write([]byte) (int, error) { return 0, nil }
 func (fc *FakeConn) Close() error              { fc.closed = true; return nil }
