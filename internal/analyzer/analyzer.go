@@ -45,6 +45,9 @@ func (da *DataRequestAnalyzer) CalculateCandidates() ([]transmuter.Candidate, er
 	candidates := make([]transmuter.Candidate, 0)
 	distances := da.matchDistances
 	size := distances.Len()
+	if size == 0 {
+		return candidates, nil
+	}
 
 	head, tail := distances[0], distances[size-1]
 	for head.distance < 0 && tail.distance > 0 {

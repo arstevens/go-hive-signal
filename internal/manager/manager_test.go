@@ -53,6 +53,10 @@ func (st *testSwarmTracker) SetSize(s string, i int) {
 	st.m[s] = i
 }
 
+func (st *testSwarmTracker) Delete(s string) {
+	delete(st.m, s)
+}
+
 type testSwarmGateway struct {
 	conn           *FakeConn
 	totalEndpoints int

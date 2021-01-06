@@ -11,6 +11,12 @@ type TestListener struct {
 	stream chan handle.Conn
 }
 
+func newTestListener(size int) *TestListener {
+	return &TestListener{
+		stream: make(chan handle.Conn, size),
+	}
+}
+
 func (tl *TestListener) AddConn(c handle.Conn) {
 	tl.stream <- c
 }
@@ -30,13 +36,13 @@ func (tl *TestListener) Close() error {
 
 func fakeReadRequest(conn handle.Conn) ([]byte, error) {
 	c := conn.(*FakeConn)
-	return c.initalData, nil
+	return c.initialData, nil
 }
 
 type FakeConn struct {
-	initalData []byte
-	addr       string
-	closed     bool
+	initialData []byte
+	addr        string
+	closed      bool
 }
 
 func (fc *FakeConn) GetIP() net.IP             { return net.ParseIP(fc.addr) }

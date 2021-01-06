@@ -20,6 +20,15 @@ import (
 	"github.com/arstevens/go-hive-signal/internal/tracker"
 	"github.com/arstevens/go-hive-signal/internal/transmuter"
 	"github.com/arstevens/go-hive-signal/internal/verifier"
+	"github.com/arstevens/go-hive-signal/pkg/protomsg"
+	"github.com/arstevens/go-request/handle"
+	"github.com/arstevens/go-request/route"
+)
+
+const (
+	LocalizerRouteCode = iota
+	RegistratorRouteCode
+	ConnectorRouteCode
 )
 
 /*
@@ -133,8 +142,24 @@ func TestRequestLocalizerSubtree(t *testing.T) {
 	identityVerifier := verifier.New(endpointRegister, connectionCache)
 	connectionHandler := connector.New(requestBufferSize, identityVerifier, swarmTransmuter)
 
+	done := make(chan struct{})
+	defer close(done)
+	routeMap := map[int32]handle.RequestHandler{
+		LocalizerRouteCode:   requestLocalizer,
+		RegistratorRouteCode: registrationHandler,
+		ConnectorRouteCode:   connectionHandler,
+	}
+	unpackersMap := map[int32]handle.UnpackRequest{
+		LocalizerRouteCode:   protomsg.UnpackLocalizeRequest,
+		RegistratorRouteCode: protomsg.UnpackRegistrationRequest,
+		ConnectorRouteCode:   protomsg.UnpackConnectionRequest,
+	}
+	listenerBufferSize := 20
+	listener := newTestListener(listenerBufferSize)
+	go route.UnpackAndRoute(listener, done, routeMap, protomsg.UnpackRouteWrapper, unpackersMap, fakeReadRequest)
+
 	//Register dataspaces
-	totalDataspaces := 10
+	totalDataspaces := 20
 	fmt.Printf("Registering %d dataspaces...\n", totalDataspaces)
 	dataspaces := make([]string, totalDataspaces)
 	endpointSet := make(map[string]map[string]bool)
@@ -142,16 +167,16 @@ func TestRequestLocalizerSubtree(t *testing.T) {
 		dataspaces[i] = fmt.Sprintf("/dataspace/%d", i)
 		endpointSet[dataspaces[i]] = make(map[string]bool)
 
-		registrationRequest := &TestRegistrationRequest{
-			add:    true,
-			origin: false,
-			field:  dataspaces[i],
-		}
-
-		err = registrationHandler.AddJob(registrationRequest, &FakeConn{})
+		registrationRequest, err := protomsg.NewRegistrationRequest(true, false, dataspaces[i])
 		if err != nil {
 			t.Fatal(err)
 		}
+		wrapped, err := protomsg.NewRouteWrapper(RegistratorRouteCode, registrationRequest)
+		if err != nil {
+			t.Fatal(err)
+		}
+		conn := &FakeConn{initialData: wrapped}
+		listener.AddConn(conn)
 	}
 
 	totalOrigins := 10
@@ -160,18 +185,19 @@ func TestRequestLocalizerSubtree(t *testing.T) {
 	for i := 0; i < totalOrigins; i++ {
 		origins[i] = fmt.Sprintf("/origin/%d", i)
 
-		registrationRequest := &TestRegistrationRequest{
-			add:    true,
-			origin: true,
-			field:  origins[i],
-		}
-		err = registrationHandler.AddJob(registrationRequest, &FakeConn{})
+		registrationRequest, err := protomsg.NewRegistrationRequest(true, true, origins[i])
 		if err != nil {
 			t.Fatal(err)
 		}
+		wrapped, err := protomsg.NewRouteWrapper(RegistratorRouteCode, registrationRequest)
+		if err != nil {
+			t.Fatal(err)
+		}
+		conn := &FakeConn{initialData: wrapped}
+		listener.AddConn(conn)
 	}
 
-	totalRuntime := time.Second * 5
+	totalRuntime := time.Second * 10
 
 	//Start endpoint additions/removals
 	rand.Seed(time.Now().UnixNano())
@@ -183,7 +209,6 @@ func TestRequestLocalizerSubtree(t *testing.T) {
 	newEndpointFrequency := 0.75
 	go func() {
 		defer close(transDone)
-		var err error
 		outOf := 100
 		newEndpointFrequencyLimit := int(float64(outOf) * newEndpointFrequency)
 		for i := 0; i < transmutationIterations; i++ {
@@ -191,24 +216,24 @@ func TestRequestLocalizerSubtree(t *testing.T) {
 
 			if rand.Intn(outOf) < newEndpointFrequencyLimit { //Add new endpoint
 				dataspace := dataspaces[rand.Intn(totalDataspaces)]
+				connectionRequest, err := protomsg.NewConnectionRequest(true, dataspace,
+					origins[0], transmuter.SwarmConnect)
+				if err != nil {
+					t.Fatal(err)
+				}
+				wrapped, err := protomsg.NewRouteWrapper(ConnectorRouteCode, connectionRequest)
+				if err != nil {
+					t.Fatal(err)
+				}
+
 				conn := &FakeConn{
+					initialData: wrapped,
 					addr: fmt.Sprintf("%d.%d.%d.%d", rand.Intn(256), rand.Intn(256),
 						rand.Intn(256), rand.Intn(256)),
 					closed: false,
 				}
 				endpointSet[dataspace][conn.addr] = true
-
-				connectionRequest := &TestConnectionRequest{
-					code:     transmuter.SwarmConnect,
-					swarmID:  dataspace,
-					originID: origins[0],
-					isLogOn:  true,
-				}
-				err = connectionHandler.AddJob(connectionRequest, conn)
-				if err != nil {
-					fmt.Printf("%v\n", err)
-					t.Fatal(err)
-				}
+				listener.AddConn(conn)
 			} else { //remove old endpoint
 				dataspace := dataspaces[rand.Intn(totalDataspaces)]
 				endpoint := getEndpointAndRemove(dataspace, endpointSet)
@@ -216,22 +241,23 @@ func TestRequestLocalizerSubtree(t *testing.T) {
 					continue
 				}
 
-				conn := &FakeConn{
-					addr:   endpoint,
-					closed: false,
-				}
-				disconnectionRequest := &TestConnectionRequest{
-					code:     transmuter.SwarmDisconnect,
-					swarmID:  dataspace,
-					originID: origins[0],
-					isLogOn:  false,
-				}
-				err = connectionHandler.AddJob(disconnectionRequest, conn)
+				disconnectionRequest, err := protomsg.NewConnectionRequest(false, dataspace,
+					origins[0], transmuter.SwarmDisconnect)
 				if err != nil {
 					t.Fatal(err)
 				}
-			}
+				wrapped, err := protomsg.NewRouteWrapper(ConnectorRouteCode, disconnectionRequest)
+				if err != nil {
+					t.Fatal(err)
+				}
 
+				conn := &FakeConn{
+					initialData: wrapped,
+					addr:        endpoint,
+					closed:      false,
+				}
+				listener.AddConn(conn)
+			}
 		}
 	}()
 
@@ -243,20 +269,25 @@ func TestRequestLocalizerSubtree(t *testing.T) {
 	go func() {
 		defer close(requestDone)
 		time.Sleep(tracker.FrequencyCalculationPeriod)
-		var err error
 		for i := 0; i < requestIterations; i++ {
 			time.Sleep(requestFrequency)
 
+			localizeRequest, err := protomsg.NewLocalizeRequest(dataspaces[rand.Intn(totalDataspaces)])
+			if err != nil {
+				t.Fatal(err)
+			}
+			wrapped, err := protomsg.NewRouteWrapper(LocalizerRouteCode, localizeRequest)
+			if err != nil {
+				t.Fatal(err)
+			}
+
 			conn := &FakeConn{
+				initialData: wrapped,
 				addr: fmt.Sprintf("%d.%d.%d.%d", rand.Intn(256), rand.Intn(256),
 					rand.Intn(256), rand.Intn(256)),
 				closed: false,
 			}
-			job := TestLocalizeRequest(dataspaces[rand.Intn(totalDataspaces)])
-			err = requestLocalizer.AddJob(&job, conn)
-			if err != nil {
-				t.Fatal(err)
-			}
+			listener.AddConn(conn)
 		}
 	}()
 	<-requestDone
@@ -274,33 +305,43 @@ func TestRequestLocalizerSubtree(t *testing.T) {
 		fmt.Printf("\t%s Load->%d TSize->%d Size->%d\n", dspace, load, tsize, size)
 	}
 
+	// Clear Origin and Dataspace registers
 	var fatalErr error
 	for _, origin := range origins {
-		registrationRequest := &TestRegistrationRequest{
-			add:    false,
-			origin: true,
-			field:  origin,
-		}
-		err = registrationHandler.AddJob(registrationRequest, &FakeConn{})
+		registrationRequest, err := protomsg.NewRegistrationRequest(false, true, origin)
 		if err != nil {
-			fatalErr = err
-			log.Printf("%v\n", err)
+			t.Fatal(err)
 		}
+		wrapped, err := protomsg.NewRouteWrapper(RegistratorRouteCode, registrationRequest)
+		if err != nil {
+			t.Fatal(err)
+		}
+		conn := &FakeConn{initialData: wrapped}
+		listener.AddConn(conn)
 	}
 	if fatalErr != nil {
 		t.Fatal(err)
 	}
+
 	for _, dspace := range dataspaces {
-		registrationRequest := &TestRegistrationRequest{
-			add:    false,
-			origin: false,
-			field:  dspace,
-		}
-		err = registrationHandler.AddJob(registrationRequest, &FakeConn{})
+		registrationRequest, err := protomsg.NewRegistrationRequest(false, false, dspace)
 		if err != nil {
 			t.Fatal(err)
 		}
+		wrapped, err := protomsg.NewRouteWrapper(RegistratorRouteCode, registrationRequest)
+		if err != nil {
+			t.Fatal(err)
+		}
+		conn := &FakeConn{initialData: wrapped}
+		listener.AddConn(conn)
 	}
+
+	// Junk data to router
+	totalJunkRequests := 10
+	for i := 0; i < totalJunkRequests; i++ {
+		listener.AddConn(&FakeConn{initialData: []byte("random data")})
+	}
+	time.Sleep(time.Second / 10)
 }
 
 func getEndpointAndRemove(dspace string, m map[string]map[string]bool) string {

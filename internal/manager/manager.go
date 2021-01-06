@@ -159,6 +159,7 @@ func (sm *SwarmManager) Close() error {
 	if sm.closed {
 		return fmt.Errorf("Failed to close in SwarmManager.Close() Already closed")
 	}
+	sm.tracker.Delete(sm.id)
 	sm.gateway.Close()
 	sm.closed = true
 	return nil

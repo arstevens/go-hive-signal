@@ -9,9 +9,9 @@ type loadEntry struct {
 	mutex *sync.Mutex
 }
 
-/*SwarmSizeTracker is an object that allows the tracking and
+/*SwarmInfoTracker is an object that allows the tracking and
 retrieving of swarm sizes*/
-type SwarmSizeTracker struct {
+type SwarmInfoTracker struct {
 	loadMap       map[string]*loadEntry
 	loadMutex     *sync.RWMutex
 	trackers      map[string]*swarmLoadTracker
@@ -20,9 +20,9 @@ type SwarmSizeTracker struct {
 	sizeMutex     *sync.RWMutex
 }
 
-//New creates a new instance of SwarmSizeTracker
-func New(historyLength int) *SwarmSizeTracker {
-	tracker := &SwarmSizeTracker{
+//New creates a new instance of SwarmInfoTracker
+func New(historyLength int) *SwarmInfoTracker {
+	tracker := &SwarmInfoTracker{
 		loadMap:       make(map[string]*loadEntry),
 		loadMutex:     &sync.RWMutex{},
 		trackers:      make(map[string]*swarmLoadTracker),
@@ -35,7 +35,7 @@ func New(historyLength int) *SwarmSizeTracker {
 	return tracker
 }
 
-func (st *SwarmSizeTracker) IncrementFrequencyCounter(dataspace string) {
+func (st *SwarmInfoTracker) IncrementFrequencyCounter(dataspace string) {
 	st.loadMutex.RLock()
 	var ok bool
 	var entry *loadEntry
@@ -54,7 +54,7 @@ func (st *SwarmSizeTracker) IncrementFrequencyCounter(dataspace string) {
 	st.loadMutex.RUnlock()
 }
 
-func (st *SwarmSizeTracker) GetLoad(dataspace string) int {
+func (st *SwarmInfoTracker) GetLoad(dataspace string) int {
 	st.trackersMutex.Lock()
 	defer st.trackersMutex.Unlock()
 	if tracker, ok := st.trackers[dataspace]; ok {
@@ -63,7 +63,7 @@ func (st *SwarmSizeTracker) GetLoad(dataspace string) int {
 	return 0
 }
 
-func (st *SwarmSizeTracker) GetDataspaces() []string {
+func (st *SwarmInfoTracker) GetDataspaces() []string {
 	st.sizeMutex.RLock()
 	dspaces := make([]string, 0, len(st.sizeMap))
 	for dspace, _ := range st.sizeMap {
@@ -74,7 +74,7 @@ func (st *SwarmSizeTracker) GetDataspaces() []string {
 }
 
 //GetSize returns the recorded size of the 'swarmID'
-func (st *SwarmSizeTracker) GetSize(swarmID string) int {
+func (st *SwarmInfoTracker) GetSize(swarmID string) int {
 	st.sizeMutex.RLock()
 	defer st.sizeMutex.RUnlock()
 	if size, ok := st.sizeMap[swarmID]; ok {
@@ -83,8 +83,14 @@ func (st *SwarmSizeTracker) GetSize(swarmID string) int {
 	return 0
 }
 
-func (st *SwarmSizeTracker) SetSize(swarmID string, size int) {
+func (st *SwarmInfoTracker) SetSize(swarmID string, size int) {
 	st.sizeMutex.Lock()
 	st.sizeMap[swarmID] = size
+	st.sizeMutex.Unlock()
+}
+
+func (st *SwarmInfoTracker) Delete(swarmID string) {
+	st.sizeMutex.Lock()
+	delete(st.sizeMap, swarmID)
 	st.sizeMutex.Unlock()
 }

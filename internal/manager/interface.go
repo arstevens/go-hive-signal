@@ -21,6 +21,7 @@ type SwarmGatewayGenerator interface {
 //Defines an object that keeps track of swarm sizes
 type SwarmSizeTracker interface {
 	SetSize(string, int)
+	Delete(string)
 }
 
 /*AgentNegotiator takes in two connection objects(the offerer
