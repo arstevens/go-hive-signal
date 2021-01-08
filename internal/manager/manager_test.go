@@ -64,7 +64,7 @@ type testSwarmGateway struct {
 	totalEndpoints int
 }
 
-func (sg *testSwarmGateway) GetEndpoint() (Conn, int, error) {
+func (sg *testSwarmGateway) GetEndpoint() (Conn, interface{}, error) {
 	return sg.conn, rand.Intn(95) + 5, nil
 }
 func (sg *testSwarmGateway) PushEndpoint(string) error {

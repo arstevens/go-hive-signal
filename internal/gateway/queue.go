@@ -1,15 +1,14 @@
 package gateway
 
 import (
-	"encoding/binary"
 	"fmt"
 	"io"
-	"log"
 
 	"github.com/arstevens/go-hive-signal/internal/manager"
 )
 
 var DefaultQueueCapacity = 100
+var DebriefProcedure func(io.Reader) interface{} = nil
 
 type activeConnectionQueue struct {
 	queue []manager.Conn
@@ -77,27 +76,17 @@ func (aq *activeConnectionQueue) Push(c manager.Conn) error {
 	return nil
 }
 
-func (aq *activeConnectionQueue) Pop() (manager.Conn, int) {
+func (aq *activeConnectionQueue) Pop() (manager.Conn, interface{}) {
 	if aq.size == 0 {
 		return nil, -1
 	}
 
 	c := aq.queue[aq.head]
-	debriefVal := debriefConnection(c)
+	debriefVal := DebriefProcedure(c)
 
 	aq.queue[aq.head] = nil
 	aq.head = (aq.head + 1) % len(aq.queue)
 	aq.size--
 
 	return c, debriefVal
-}
-
-func debriefConnection(conn io.Reader) int {
-	var debriefValue int32
-	err := binary.Read(conn, binary.BigEndian, &debriefValue)
-	if err != nil {
-		log.Printf("Failed to debrief in gateway.debriefConnection(): %v", err)
-		return -1
-	}
-	return int(debriefValue)
 }

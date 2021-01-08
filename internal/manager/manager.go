@@ -51,8 +51,8 @@ func (sm *SwarmManager) AttemptToPair(conn interface{}) error {
 		log.Printf("Failed to pair in SwarmManager.AttemptToPair(): %v", err)
 		return nil
 	}
-	if prefLoad > 0 {
-		sm.tracker.AddPreferredLoadDatapoint(sm.id, prefLoad)
+	if prefLoad != nil && prefLoad.(int) > 0 {
+		sm.tracker.AddPreferredLoadDatapoint(sm.id, prefLoad.(int))
 	}
 
 	offererConn, ok := offerer.(Conn)
@@ -111,8 +111,8 @@ func (sm *SwarmManager) connectForContextRetrieval(conn Conn) error {
 		empty and therefore there is no context to retrieve*/
 		return nil
 	}
-	if prefLoad > 0 {
-		sm.tracker.AddPreferredLoadDatapoint(sm.id, prefLoad)
+	if prefLoad != nil && prefLoad.(int) > 0 {
+		sm.tracker.AddPreferredLoadDatapoint(sm.id, prefLoad.(int))
 	}
 	offererConn, ok := offerer.(Conn)
 	if !ok {

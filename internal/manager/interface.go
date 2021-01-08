@@ -7,8 +7,8 @@ in a designated swarm*/
 type SwarmGateway interface {
 	PushEndpoint(string) error
 	RemoveEndpoint(string) error
-	//Returns the connection, the preferred load parameter, and an error
-	GetEndpoint() (Conn, int, error)
+	//Returns the connection, a debrief object, and an error
+	GetEndpoint() (Conn, interface{}, error)
 	GetTotalEndpoints() int
 	GetEndpointAddrs() []string
 	io.Closer

@@ -1,7 +1,10 @@
 package gateway
 
 import (
+	"encoding/binary"
 	"fmt"
+	"io"
+	"log"
 	"math/rand"
 	"strconv"
 	"testing"
@@ -14,6 +17,15 @@ func TestSwarmGateway(t *testing.T) {
 	fmt.Printf("---------------------------\n    SWARM GATEWAY TEST\n---------------------------\n")
 	DialEndpoint = func(addr string) (manager.Conn, error) {
 		return &FakeConn{addr: addr, closed: false}, nil
+	}
+	DebriefProcedure = func(conn io.Reader) interface{} {
+		var debriefValue int32
+		err := binary.Read(conn, binary.BigEndian, &debriefValue)
+		if err != nil {
+			log.Printf("Failed to debrief in gateway.debriefConnection(): %v", err)
+			return -1
+		}
+		return int(debriefValue)
 	}
 
 	activeSize := 10

@@ -44,7 +44,7 @@ func (sg *SwarmGateway) RemoveEndpoint(addr string) error {
 	return nil
 }
 
-func (sg *SwarmGateway) GetEndpoint() (manager.Conn, int, error) {
+func (sg *SwarmGateway) GetEndpoint() (manager.Conn, interface{}, error) {
 	sg.aqMutex.Lock()
 	if sg.activeQueue.IsEmpty() {
 		sg.aqMutex.Unlock()

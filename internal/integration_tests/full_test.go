@@ -11,6 +11,7 @@ import (
 	"github.com/arstevens/go-hive-signal/internal/analyzer"
 	"github.com/arstevens/go-hive-signal/internal/cache"
 	"github.com/arstevens/go-hive-signal/internal/connector"
+	"github.com/arstevens/go-hive-signal/internal/debriefer"
 	"github.com/arstevens/go-hive-signal/internal/finder"
 	"github.com/arstevens/go-hive-signal/internal/gateway"
 	"github.com/arstevens/go-hive-signal/internal/localizer"
@@ -115,6 +116,7 @@ func TestRequestLocalizerSubtree(t *testing.T) {
 
 	activeSize := 10
 	inactiveSize := 20
+	gateway.DebriefProcedure = debriefer.LoadPreferenceDebrief
 	gatewayGen := gateway.NewGenerator(activeSize, inactiveSize)
 	managerGen := manager.NewGenerator(gatewayGen, negotiate, infoTracker)
 
