@@ -15,21 +15,23 @@ func TestAnalyzer(t *testing.T) {
 	sizeLimit := 100
 	loadLimit := sizeLimit
 	sizes := make(map[string]int)
+	dupSizes := make(map[string]int)
 	loads := make(map[string]int)
 
 	fmt.Printf("Initial dataspace parameters\n----------------------------\n")
 	for i := 0; i < totalDataspaces; i++ {
 		dspace := "/dataspace/" + strconv.Itoa(i)
 		sizes[dspace] = rand.Intn(sizeLimit)
+		dupSizes[dspace] = sizes[dspace]
 		loads[dspace] = rand.Intn(loadLimit)
 
 		fmt.Printf("\t%s: (Size: %d) (Load: %d)\n", dspace, sizes[dspace], loads[dspace])
 	}
 
 	DistancePollTime = time.Millisecond
-	OptimalSizeForLoad = func(s int) int { return s }
 	tracker := &TestSwarmInfoTracker{sizes: sizes, loads: loads}
-	analyzer := New(tracker)
+	finder := &TestOptimalSizeFinder{sizes: dupSizes}
+	analyzer := New(tracker, finder)
 
 	time.Sleep(DistancePollTime * 2)
 	needyID, err := analyzer.GetMostNeedy()
@@ -52,6 +54,17 @@ func TestAnalyzer(t *testing.T) {
 	for _, distance := range analyzer.matchDistances {
 		fmt.Printf("\tDataspace: %s Distance: %d\n", distance.dataspace, distance.distance)
 	}
+}
+
+type TestOptimalSizeFinder struct {
+	sizes map[string]int
+}
+
+func (sf *TestOptimalSizeFinder) GetBestSize(id string) int {
+	if size, ok := sf.sizes[id]; ok {
+		return size
+	}
+	return -1
 }
 
 type TestSwarmInfoTracker struct {

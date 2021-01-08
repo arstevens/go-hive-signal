@@ -34,13 +34,13 @@ func TestSwarmGateway(t *testing.T) {
 	removals := make([]*FakeConn, activeSize)
 	fmt.Printf("Getting %d endpoints...\n", activeSize)
 	for i := 0; i < activeSize; i++ {
-		conn, err := gateway.GetEndpoint()
+		conn, pref, err := gateway.GetEndpoint()
 		if err != nil {
 			t.Fatal(err)
 		}
 		c := conn.(*FakeConn)
 		removals[i] = c
-		fmt.Printf("\tFetched endpoint at %s\n", c.GetAddress())
+		fmt.Printf("\tFetched endpoint at %s with Pref_Load %d\n", c.GetAddress(), pref)
 	}
 	fmt.Printf("\tTotal Connections: active=%d inactive=%d\n", gateway.activeQueue.GetSize(), gateway.inactiveQueue.GetSize())
 
@@ -73,11 +73,11 @@ func TestActiveConnectionQueue(t *testing.T) {
 	}
 	fmt.Printf("(Add Test)\n\tPopping off with starting size %d...\n", queue.size)
 	for i := 0; i < queueSize; i++ {
-		c := queue.Pop()
+		c, pref := queue.Pop()
 		if c == nil {
 			t.Fatalf("Invalid NIL return on queue pop")
 		}
-		fmt.Printf("\t%s\n", c.GetAddress())
+		fmt.Printf("\t%s Pref: %d\n", c.GetAddress(), pref)
 	}
 	fmt.Printf("\tEnding size of %d\n", queue.size)
 
@@ -93,7 +93,7 @@ func TestActiveConnectionQueue(t *testing.T) {
 
 	fmt.Printf("(Wrap and Overflow Test)\n\tPopping off with starting size %d...\n", queue.size)
 	for i := 0; i < queueSize+1; i++ {
-		c := queue.Pop()
+		c, pref := queue.Pop()
 		if i == queueSize && c != nil {
 			t.Fatalf("Non NIL return on empty queue pop")
 		}
@@ -101,7 +101,7 @@ func TestActiveConnectionQueue(t *testing.T) {
 			t.Fatalf("Invalid NIL return on queue pop")
 		}
 		if c != nil {
-			fmt.Printf("\t%s\n", c.GetAddress())
+			fmt.Printf("\t%s Pref: %d\n", c.GetAddress(), pref)
 		}
 	}
 	fmt.Printf("\tEnding size of %d\n", queue.size)
@@ -130,11 +130,11 @@ func TestActiveConnectionQueue(t *testing.T) {
 
 	fmt.Printf("\tPopping off with starting size %d...\n", queue.size)
 	for queue.size > 0 {
-		c := queue.Pop()
+		c, pref := queue.Pop()
 		if c == nil {
 			t.Fatalf("Invalid NIL return on queue pop")
 		}
-		fmt.Printf("\t%s\n", c.GetAddress())
+		fmt.Printf("\t%s Pref: %d\n", c.GetAddress(), pref)
 	}
 	fmt.Printf("\tEnding size of %d\n", queue.size)
 
@@ -190,7 +190,12 @@ type FakeConn struct {
 	closed bool
 }
 
-func (fc *FakeConn) Read([]byte) (int, error)  { return 0, nil }
+func (fc *FakeConn) Read(b []byte) (int, error) {
+	for i := 0; i < len(b); i++ {
+		b[i] = byte(rand.Intn(256))
+	}
+	return len(b), nil
+}
 func (fc *FakeConn) Write([]byte) (int, error) { return 0, nil }
 func (fc *FakeConn) Close() error              { fc.closed = true; return nil }
 func (fc *FakeConn) IsClosed() bool            { return fc.closed }

@@ -3,21 +3,12 @@ package gateway
 import (
 	"fmt"
 	"log"
-	"net"
 	"sync"
 
 	"github.com/arstevens/go-hive-signal/internal/manager"
 )
 
-var NewConnWraper func(net.Conn) manager.Conn = nil
-
-var DialEndpoint = func(addr string) (manager.Conn, error) {
-	conn, err := net.Dial("tcp", addr)
-	if err != nil {
-		return nil, err
-	}
-	return NewConnWraper(conn), nil
-}
+var DialEndpoint func(addr string) (manager.Conn, error) = nil
 
 type SwarmGateway struct {
 	activeQueue   *activeConnectionQueue
@@ -53,13 +44,13 @@ func (sg *SwarmGateway) RemoveEndpoint(addr string) error {
 	return nil
 }
 
-func (sg *SwarmGateway) GetEndpoint() (manager.Conn, error) {
+func (sg *SwarmGateway) GetEndpoint() (manager.Conn, int, error) {
 	sg.aqMutex.Lock()
 	if sg.activeQueue.IsEmpty() {
 		sg.aqMutex.Unlock()
 		err := sg.populateActiveQueue()
 		if err != nil {
-			return nil, fmt.Errorf("Failed in SwarmGateway.GetEndpoint(): %v", err)
+			return nil, -1, fmt.Errorf("Failed in SwarmGateway.GetEndpoint(): %v", err)
 		}
 	} else {
 		sg.aqMutex.Unlock()
@@ -67,15 +58,15 @@ func (sg *SwarmGateway) GetEndpoint() (manager.Conn, error) {
 
 	sg.aqMutex.Lock()
 	sg.pcMutex.Lock()
-	conn := sg.activeQueue.Pop()
+	conn, debriefValue := sg.activeQueue.Pop()
 	for conn != nil && conn.IsClosed() {
 		delete(sg.priorityCache, conn.GetAddress())
-		conn = sg.activeQueue.Pop()
+		conn, debriefValue = sg.activeQueue.Pop()
 	}
 	if conn == nil {
 		sg.aqMutex.Unlock()
 		sg.pcMutex.Unlock()
-		return nil, fmt.Errorf("No active endpoints in SwarmGateway.GetEndpoint()")
+		return nil, debriefValue, fmt.Errorf("No active endpoints in SwarmGateway.GetEndpoint()")
 	}
 
 	addr := conn.GetAddress()
@@ -89,7 +80,7 @@ func (sg *SwarmGateway) GetEndpoint() (manager.Conn, error) {
 	sg.iqMutex.Unlock()
 
 	sg.populateActiveQueue()
-	return conn, nil
+	return conn, debriefValue, nil
 }
 
 func (sg *SwarmGateway) GetTotalEndpoints() int {
@@ -129,7 +120,7 @@ func (sg *SwarmGateway) Close() error {
 
 	sg.aqMutex.Lock()
 	for !sg.activeQueue.IsEmpty() {
-		conn := sg.activeQueue.Pop()
+		conn, _ := sg.activeQueue.Pop()
 		conn.Close()
 	}
 	sg.aqMutex.Unlock()

@@ -8,24 +8,21 @@ import (
 	"github.com/arstevens/go-hive-signal/internal/transmuter"
 )
 
-/*OptimalLoadForSize must be set before DataRequestAnalyzer can
-be used. It is a function that returns the optimal load to size
-pairing for a swarm*/
-var OptimalSizeForLoad func(size int) int = nil
-
 type DataRequestAnalyzer struct {
 	matchDistances swarmDistancesSlice
 	dMutex         *sync.Mutex
 	sizeTracker    SwarmInfoTracker
+	sizeFinder     OptimalSizeFinder
 }
 
-func New(sizeTracker SwarmInfoTracker) *DataRequestAnalyzer {
+func New(sizeTracker SwarmInfoTracker, sizeFinder OptimalSizeFinder) *DataRequestAnalyzer {
 	analyzer := &DataRequestAnalyzer{
 		matchDistances: swarmDistancesSlice(make([]*swarmDistanceInfo, 0)),
 		dMutex:         &sync.Mutex{},
 		sizeTracker:    sizeTracker,
+		sizeFinder:     sizeFinder,
 	}
-	go pollForNewDistances(sizeTracker, &analyzer.matchDistances, analyzer.dMutex)
+	go pollForNewDistances(sizeTracker, sizeFinder, &analyzer.matchDistances, analyzer.dMutex)
 	return analyzer
 }
 

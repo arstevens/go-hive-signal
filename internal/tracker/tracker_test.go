@@ -34,9 +34,15 @@ func TestTracker(t *testing.T) {
 		for j := 0; j < count; j++ {
 			tracker.IncrementFrequencyCounter(dspace)
 		}
+
+		totalPrefs := rand.Intn(10)
+		for j := 0; j < totalPrefs; j++ {
+			tracker.AddPreferredLoadDatapoint(dspace, rand.Intn(100))
+		}
 	}
 
 	for _, dspace := range swarms {
-		fmt.Printf("Swarm %s : Size %d : Load %d\n", dspace, tracker.GetSize(dspace), tracker.GetLoad(dspace))
+		fmt.Printf("Swarm %s : Size %d : Load %d : Pref_Load %d\n", dspace, tracker.GetSize(dspace),
+			tracker.GetLoad(dspace), tracker.GetPreferredLoadPerMember(dspace))
 	}
 }

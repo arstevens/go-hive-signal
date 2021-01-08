@@ -17,14 +17,14 @@ type SwarmManager struct {
 	gateway     SwarmGateway
 	gatewayLock *sync.Mutex
 	negotiate   AgentNegotiator
-	tracker     SwarmSizeTracker
+	tracker     SwarmInfoTracker
 	closed      bool
 	id          string
 	changes     int
 }
 
 //New creates a new SwarmManager
-func New(swarmID string, gateway SwarmGateway, negotiate AgentNegotiator, tracker SwarmSizeTracker) *SwarmManager {
+func New(swarmID string, gateway SwarmGateway, negotiate AgentNegotiator, tracker SwarmInfoTracker) *SwarmManager {
 	tracker.SetSize(swarmID, gateway.GetTotalEndpoints())
 	return &SwarmManager{
 		gateway:   gateway,
@@ -46,11 +46,15 @@ func (sm *SwarmManager) AttemptToPair(conn interface{}) error {
 	if !ok {
 		return fmt.Errorf("Failed to pair in SwarmManager.AttemptToPair(). 'conn' does not conform to Conn interface")
 	}
-	offerer, err := sm.gateway.GetEndpoint()
+	offerer, prefLoad, err := sm.gateway.GetEndpoint()
 	if err != nil {
 		log.Printf("Failed to pair in SwarmManager.AttemptToPair(): %v", err)
 		return nil
 	}
+	if prefLoad > 0 {
+		sm.tracker.AddPreferredLoadDatapoint(sm.id, prefLoad)
+	}
+
 	offererConn, ok := offerer.(Conn)
 	if !ok {
 		return fmt.Errorf("Failed to pair in SwarmManager.AttemptToPair(). offerer 'conn' does not conform to Conn interface")
@@ -70,7 +74,7 @@ func (sm *SwarmManager) AddEndpoint(c interface{}) error {
 	if !ok {
 		return fmt.Errorf("Failed to add endpoint in SwarmManager.AddEndpoint(): parameter of wrong type")
 	}
-	err := connectForContextRetrieval(conn, sm.negotiate, sm.gateway)
+	err := sm.connectForContextRetrieval(conn)
 	if err != nil {
 		return err
 	}
@@ -100,18 +104,21 @@ func (sm *SwarmManager) TakeEndpoint(addr string) error {
 	return nil
 }
 
-func connectForContextRetrieval(conn Conn, negotiate AgentNegotiator, gateway SwarmGateway) error {
-	offerer, err := gateway.GetEndpoint()
+func (sm *SwarmManager) connectForContextRetrieval(conn Conn) error {
+	offerer, prefLoad, err := sm.gateway.GetEndpoint()
 	if err != nil {
 		/*If there was an error getting an endpoint thats because the swarm is
 		empty and therefore there is no context to retrieve*/
 		return nil
 	}
+	if prefLoad > 0 {
+		sm.tracker.AddPreferredLoadDatapoint(sm.id, prefLoad)
+	}
 	offererConn, ok := offerer.(Conn)
 	if !ok {
 		return fmt.Errorf("Failed to negotiate in SwarmManager.AddEndpoint(): Connection of wrong type")
 	}
-	err = negotiate(offererConn, conn)
+	err = sm.negotiate(offererConn, conn)
 	if err != nil {
 		return fmt.Errorf("Failed to negotiate in SwarmManager.AddEndpoint(): %v", err)
 	}

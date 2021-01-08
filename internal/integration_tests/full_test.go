@@ -11,6 +11,7 @@ import (
 	"github.com/arstevens/go-hive-signal/internal/analyzer"
 	"github.com/arstevens/go-hive-signal/internal/cache"
 	"github.com/arstevens/go-hive-signal/internal/connector"
+	"github.com/arstevens/go-hive-signal/internal/finder"
 	"github.com/arstevens/go-hive-signal/internal/gateway"
 	"github.com/arstevens/go-hive-signal/internal/localizer"
 	"github.com/arstevens/go-hive-signal/internal/manager"
@@ -86,12 +87,6 @@ func TestIdentityVerifier(t *testing.T) {
 func TestRequestLocalizerSubtree(t *testing.T) {
 	fmt.Printf("\nREQUEST LOCALIZER SUBTREE\n----------------------\n")
 	//Prepare environment
-	analyzer.OptimalSizeForLoad = func(s int) int {
-		if s%2 == 0 {
-			return s * 20
-		}
-		return s
-	}
 	analyzer.DistancePollTime = time.Millisecond * 10
 	tracker.FrequencyCalculationPeriod = time.Second //time.Millisecond * 50
 	transmuter.PollPeriod = time.Second
@@ -116,6 +111,7 @@ func TestRequestLocalizerSubtree(t *testing.T) {
 	fmt.Printf("Creating simulation instances...\n")
 	historyLength := 10
 	infoTracker := tracker.New(historyLength)
+	optimalFinder := finder.New(infoTracker)
 
 	activeSize := 10
 	inactiveSize := 20
@@ -123,7 +119,7 @@ func TestRequestLocalizerSubtree(t *testing.T) {
 	managerGen := manager.NewGenerator(gatewayGen, negotiate, infoTracker)
 
 	swarmMap := mapper.New(managerGen)
-	dataRequestAnalyzer := analyzer.New(infoTracker)
+	dataRequestAnalyzer := analyzer.New(infoTracker, optimalFinder)
 	swarmTransmuter := transmuter.New(swarmMap, dataRequestAnalyzer)
 
 	requestBufferSize := 10
@@ -159,7 +155,7 @@ func TestRequestLocalizerSubtree(t *testing.T) {
 	go route.UnpackAndRoute(listener, done, routeMap, protomsg.UnpackRouteWrapper, unpackersMap, fakeReadRequest)
 
 	//Register dataspaces
-	totalDataspaces := 20
+	totalDataspaces := 10
 	fmt.Printf("Registering %d dataspaces...\n", totalDataspaces)
 	dataspaces := make([]string, totalDataspaces)
 	endpointSet := make(map[string]map[string]bool)
@@ -197,7 +193,7 @@ func TestRequestLocalizerSubtree(t *testing.T) {
 		listener.AddConn(conn)
 	}
 
-	totalRuntime := time.Second * 10
+	totalRuntime := time.Second * 5
 
 	//Start endpoint additions/removals
 	rand.Seed(time.Now().UnixNano())

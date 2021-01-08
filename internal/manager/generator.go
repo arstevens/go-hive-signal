@@ -6,12 +6,12 @@ and SwarmSizeTracker objects*/
 type SwarmManagerGenerator struct {
 	gatewayGenerator SwarmGatewayGenerator
 	negotiator       AgentNegotiator
-	tracker          SwarmSizeTracker
+	tracker          SwarmInfoTracker
 }
 
 //NewGenerator creates a new instance of SwarmManagerGenerator
 func NewGenerator(gatewayGen SwarmGatewayGenerator, negotiate AgentNegotiator,
-	tracker SwarmSizeTracker) *SwarmManagerGenerator {
+	tracker SwarmInfoTracker) *SwarmManagerGenerator {
 	return &SwarmManagerGenerator{
 		gatewayGenerator: gatewayGen,
 		negotiator:       negotiate,

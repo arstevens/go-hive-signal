@@ -57,13 +57,15 @@ func (st *testSwarmTracker) Delete(s string) {
 	delete(st.m, s)
 }
 
+func (st *testSwarmTracker) AddPreferredLoadDatapoint(string, int) {}
+
 type testSwarmGateway struct {
 	conn           *FakeConn
 	totalEndpoints int
 }
 
-func (sg *testSwarmGateway) GetEndpoint() (Conn, error) {
-	return sg.conn, nil
+func (sg *testSwarmGateway) GetEndpoint() (Conn, int, error) {
+	return sg.conn, rand.Intn(95) + 5, nil
 }
 func (sg *testSwarmGateway) PushEndpoint(string) error {
 	sg.totalEndpoints++

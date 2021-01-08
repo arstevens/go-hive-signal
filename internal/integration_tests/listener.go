@@ -2,6 +2,7 @@ package integration_tests
 
 import (
 	"fmt"
+	"math/rand"
 	"net"
 
 	"github.com/arstevens/go-request/handle"
@@ -45,8 +46,11 @@ type FakeConn struct {
 	closed      bool
 }
 
-func (fc *FakeConn) GetIP() net.IP             { return net.ParseIP(fc.addr) }
-func (fc *FakeConn) Read([]byte) (int, error)  { return 0, nil }
+func (fc *FakeConn) GetIP() net.IP { return net.ParseIP(fc.addr) }
+func (fc *FakeConn) Read(b []byte) (int, error) {
+	b[len(b)-1] = byte(rand.Intn(4) + 1)
+	return len(b), nil
+}
 func (fc *FakeConn) Write([]byte) (int, error) { return 0, nil }
 func (fc *FakeConn) Close() error              { fc.closed = true; return nil }
 func (fc *FakeConn) IsClosed() bool            { return fc.closed }

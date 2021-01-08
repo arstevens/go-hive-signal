@@ -7,7 +7,8 @@ in a designated swarm*/
 type SwarmGateway interface {
 	PushEndpoint(string) error
 	RemoveEndpoint(string) error
-	GetEndpoint() (Conn, error)
+	//Returns the connection, the preferred load parameter, and an error
+	GetEndpoint() (Conn, int, error)
 	GetTotalEndpoints() int
 	GetEndpointAddrs() []string
 	io.Closer
@@ -19,7 +20,8 @@ type SwarmGatewayGenerator interface {
 }
 
 //Defines an object that keeps track of swarm sizes
-type SwarmSizeTracker interface {
+type SwarmInfoTracker interface {
+	AddPreferredLoadDatapoint(string, int)
 	SetSize(string, int)
 	Delete(string)
 }

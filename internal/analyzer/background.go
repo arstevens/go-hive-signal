@@ -8,7 +8,8 @@ import (
 
 var DistancePollTime = time.Minute
 
-func pollForNewDistances(tracker SwarmInfoTracker, distances *swarmDistancesSlice, mutex *sync.Mutex) {
+func pollForNewDistances(tracker SwarmInfoTracker, optimalFinder OptimalSizeFinder,
+	distances *swarmDistancesSlice, mutex *sync.Mutex) {
 	for {
 		time.Sleep(DistancePollTime)
 
@@ -16,9 +17,9 @@ func pollForNewDistances(tracker SwarmInfoTracker, distances *swarmDistancesSlic
 		newDistances := make([]*swarmDistanceInfo, 0, len(dataspaces))
 		for _, dataspace := range dataspaces {
 			size := tracker.GetSize(dataspace)
-			load := tracker.GetLoad(dataspace)
+			optimalSize := optimalFinder.GetBestSize(dataspace)
 
-			distance := size - OptimalSizeForLoad(load)
+			distance := size - optimalSize
 			newDistances = append(newDistances, &swarmDistanceInfo{
 				dataspace: dataspace,
 				distance:  distance,
