@@ -6,5 +6,5 @@ as well as the average preferred load for individual
 members of the swarm*/
 type SwarmInfoTracker interface {
 	GetLoad(string) int
-	GetPreferredLoadPerMember(string) int
+	GetDebriefData(string) interface{}
 }

@@ -12,29 +12,31 @@ type loadEntry struct {
 /*SwarmInfoTracker is an object that allows the tracking and
 retrieving of swarm sizes*/
 type SwarmInfoTracker struct {
-	historyLength int
-	loadMap       map[string]*loadEntry
-	loadMutex     *sync.RWMutex
-	trackers      map[string]*swarmLoadTracker
-	trackersMutex *sync.Mutex
-	sizeMap       map[string]int
-	sizeMutex     *sync.RWMutex
-	prefLoadMap   map[string]*swarmLoadTracker
-	prefMutex     *sync.Mutex
+	historyLength   int
+	loadMap         map[string]*loadEntry
+	loadMutex       *sync.RWMutex
+	trackers        map[string]*SwarmLoadTracker
+	trackersMutex   *sync.Mutex
+	sizeMap         map[string]int
+	sizeMutex       *sync.RWMutex
+	debriefMap      map[string]StorageEngine
+	debriefMutex    *sync.Mutex
+	engineGenerator StorageEngineGenerator
 }
 
 //New creates a new instance of SwarmInfoTracker
-func New(historyLength int) *SwarmInfoTracker {
+func New(generator StorageEngineGenerator, historyLength int) *SwarmInfoTracker {
 	tracker := &SwarmInfoTracker{
-		historyLength: historyLength,
-		loadMap:       make(map[string]*loadEntry),
-		loadMutex:     &sync.RWMutex{},
-		trackers:      make(map[string]*swarmLoadTracker),
-		trackersMutex: &sync.Mutex{},
-		sizeMap:       make(map[string]int),
-		sizeMutex:     &sync.RWMutex{},
-		prefLoadMap:   make(map[string]*swarmLoadTracker),
-		prefMutex:     &sync.Mutex{},
+		historyLength:   historyLength,
+		loadMap:         make(map[string]*loadEntry),
+		loadMutex:       &sync.RWMutex{},
+		trackers:        make(map[string]*SwarmLoadTracker),
+		trackersMutex:   &sync.Mutex{},
+		sizeMap:         make(map[string]int),
+		sizeMutex:       &sync.RWMutex{},
+		debriefMap:      make(map[string]StorageEngine),
+		debriefMutex:    &sync.Mutex{},
+		engineGenerator: generator,
 	}
 	go calculateFrequencyOnInterval(historyLength, tracker.loadMap, tracker.trackers,
 		tracker.loadMutex, tracker.trackersMutex)
@@ -95,28 +97,32 @@ func (st *SwarmInfoTracker) SetSize(swarmID string, size int) {
 	st.sizeMutex.Unlock()
 }
 
-func (st *SwarmInfoTracker) AddPreferredLoadDatapoint(swarmID string, parameter int) {
-	st.prefMutex.Lock()
-	if _, ok := st.prefLoadMap[swarmID]; !ok {
-		st.prefLoadMap[swarmID] = newLoadTracker(st.historyLength)
+func (st *SwarmInfoTracker) AddDebriefDatapoint(swarmID string, debrief interface{}) {
+	st.debriefMutex.Lock()
+	if _, ok := st.debriefMap[swarmID]; !ok {
+		st.debriefMap[swarmID] = st.engineGenerator.New()
 	}
-	st.prefLoadMap[swarmID].AddFrequencyDatapoint(parameter)
-	st.prefMutex.Unlock()
+	st.debriefMap[swarmID].AddDatapoint(debrief)
+	st.debriefMutex.Unlock()
 }
 
-func (st *SwarmInfoTracker) GetPreferredLoadPerMember(swarmID string) int {
-	prefLoad := 0
+func (st *SwarmInfoTracker) GetDebriefData(swarmID string) interface{} {
+	var data interface{} = nil
 
-	st.prefMutex.Lock()
-	if tracker, ok := st.prefLoadMap[swarmID]; ok {
-		prefLoad = tracker.CalculateAverageFrequency()
+	st.debriefMutex.Lock()
+	if engine, ok := st.debriefMap[swarmID]; ok {
+		data = engine.GetData()
 	}
-	st.prefMutex.Unlock()
-	return prefLoad
+	st.debriefMutex.Unlock()
+	return data
 }
 
 func (st *SwarmInfoTracker) Delete(swarmID string) {
 	st.sizeMutex.Lock()
 	delete(st.sizeMap, swarmID)
 	st.sizeMutex.Unlock()
+
+	st.debriefMutex.Lock()
+	delete(st.debriefMap, swarmID)
+	st.debriefMutex.Unlock()
 }

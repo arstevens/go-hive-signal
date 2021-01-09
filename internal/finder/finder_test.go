@@ -38,6 +38,6 @@ type testTracker struct {
 func (tt *testTracker) GetLoad(id string) int {
 	return tt.loads[id]
 }
-func (tt *testTracker) GetPreferredLoadPerMember(id string) int {
+func (tt *testTracker) GetDebriefData(id string) interface{} {
 	return tt.prefLoads[id]
 }

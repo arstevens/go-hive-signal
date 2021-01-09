@@ -46,13 +46,13 @@ func (sm *SwarmManager) AttemptToPair(conn interface{}) error {
 	if !ok {
 		return fmt.Errorf("Failed to pair in SwarmManager.AttemptToPair(). 'conn' does not conform to Conn interface")
 	}
-	offerer, prefLoad, err := sm.gateway.GetEndpoint()
+	offerer, debrief, err := sm.gateway.GetEndpoint()
 	if err != nil {
 		log.Printf("Failed to pair in SwarmManager.AttemptToPair(): %v", err)
 		return nil
 	}
-	if prefLoad != nil && prefLoad.(int) > 0 {
-		sm.tracker.AddPreferredLoadDatapoint(sm.id, prefLoad.(int))
+	if debrief != nil {
+		sm.tracker.AddDebriefDatapoint(sm.id, debrief)
 	}
 
 	offererConn, ok := offerer.(Conn)
@@ -105,14 +105,14 @@ func (sm *SwarmManager) TakeEndpoint(addr string) error {
 }
 
 func (sm *SwarmManager) connectForContextRetrieval(conn Conn) error {
-	offerer, prefLoad, err := sm.gateway.GetEndpoint()
+	offerer, debrief, err := sm.gateway.GetEndpoint()
 	if err != nil {
 		/*If there was an error getting an endpoint thats because the swarm is
 		empty and therefore there is no context to retrieve*/
 		return nil
 	}
-	if prefLoad != nil && prefLoad.(int) > 0 {
-		sm.tracker.AddPreferredLoadDatapoint(sm.id, prefLoad.(int))
+	if debrief != nil {
+		sm.tracker.AddDebriefDatapoint(sm.id, debrief)
 	}
 	offererConn, ok := offerer.(Conn)
 	if !ok {

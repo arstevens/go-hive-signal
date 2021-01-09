@@ -48,7 +48,7 @@ type FakeConn struct {
 
 func (fc *FakeConn) GetIP() net.IP { return net.ParseIP(fc.addr) }
 func (fc *FakeConn) Read(b []byte) (int, error) {
-	b[len(b)-1] = byte(rand.Intn(4) + 1)
+	b[len(b)-1] = byte(rand.Intn(20) + 1)
 	return len(b), nil
 }
 func (fc *FakeConn) Write([]byte) (int, error) { return 0, nil }

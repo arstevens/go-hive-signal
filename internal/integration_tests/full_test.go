@@ -111,7 +111,8 @@ func TestRequestLocalizerSubtree(t *testing.T) {
 	//Create all needed instances
 	fmt.Printf("Creating simulation instances...\n")
 	historyLength := 10
-	infoTracker := tracker.New(historyLength)
+	engineGenerator := debriefer.NewLPSEGenerator(historyLength)
+	infoTracker := tracker.New(engineGenerator, historyLength)
 	optimalFinder := finder.New(infoTracker)
 
 	activeSize := 10

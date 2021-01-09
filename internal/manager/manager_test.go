@@ -57,7 +57,7 @@ func (st *testSwarmTracker) Delete(s string) {
 	delete(st.m, s)
 }
 
-func (st *testSwarmTracker) AddPreferredLoadDatapoint(string, int) {}
+func (st *testSwarmTracker) AddDebriefDatapoint(string, interface{}) {}
 
 type testSwarmGateway struct {
 	conn           *FakeConn

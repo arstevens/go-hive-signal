@@ -18,7 +18,7 @@ func TestTracker(t *testing.T) {
 	}
 
 	FrequencyCalculationPeriod = time.Millisecond * 10
-	tracker := New(0)
+	tracker := New(&testGenerator{}, 0)
 	totalOps := 300
 	freqCountPer := 1000
 	pollTime := time.Millisecond * 3
@@ -37,12 +37,29 @@ func TestTracker(t *testing.T) {
 
 		totalPrefs := rand.Intn(10)
 		for j := 0; j < totalPrefs; j++ {
-			tracker.AddPreferredLoadDatapoint(dspace, rand.Intn(100))
+			tracker.AddDebriefDatapoint(dspace, rand.Intn(100))
 		}
 	}
 
 	for _, dspace := range swarms {
 		fmt.Printf("Swarm %s : Size %d : Load %d : Pref_Load %d\n", dspace, tracker.GetSize(dspace),
-			tracker.GetLoad(dspace), tracker.GetPreferredLoadPerMember(dspace))
+			tracker.GetLoad(dspace), tracker.GetDebriefData(dspace).(int))
 	}
+}
+
+type testGenerator struct{}
+
+func (g *testGenerator) New() StorageEngine {
+	return &testStorageEngine{data: 0}
+}
+
+type testStorageEngine struct {
+	data int
+}
+
+func (se *testStorageEngine) AddDatapoint(i interface{}) {
+	se.data = i.(int)
+}
+func (se *testStorageEngine) GetData() interface{} {
+	return se.data
 }

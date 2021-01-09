@@ -1,41 +1,20 @@
-2021/01/07 21:19:08 Failed to handle registration request in RegistrationHandler: Failed to add origin in EndpointRegistrationDatabase.AddOrigin(): Origin /origin/0 already exists
-2021/01/07 21:19:08 Failed to handle registration request in RegistrationHandler: Failed to add origin in EndpointRegistrationDatabase.AddOrigin(): Origin /origin/1 already exists
-2021/01/07 21:19:08 Failed to handle registration request in RegistrationHandler: Failed to add origin in EndpointRegistrationDatabase.AddOrigin(): Origin /origin/2 already exists
-2021/01/07 21:19:08 Failed to handle registration request in RegistrationHandler: Failed to add origin in EndpointRegistrationDatabase.AddOrigin(): Origin /origin/3 already exists
-2021/01/07 21:19:08 Failed to handle registration request in RegistrationHandler: Failed to add origin in EndpointRegistrationDatabase.AddOrigin(): Origin /origin/4 already exists
-2021/01/07 21:19:08 Failed to handle registration request in RegistrationHandler: Failed to add origin in EndpointRegistrationDatabase.AddOrigin(): Origin /origin/5 already exists
-2021/01/07 21:19:08 Failed to handle registration request in RegistrationHandler: Failed to add origin in EndpointRegistrationDatabase.AddOrigin(): Origin /origin/6 already exists
-2021/01/07 21:19:08 Failed to handle registration request in RegistrationHandler: Failed to add origin in EndpointRegistrationDatabase.AddOrigin(): Origin /origin/7 already exists
-2021/01/07 21:19:08 Failed to handle registration request in RegistrationHandler: Failed to add origin in EndpointRegistrationDatabase.AddOrigin(): Origin /origin/8 already exists
-2021/01/07 21:19:08 Failed to handle registration request in Registrat2021/01/07 21:19:10 Failed to unmarshal in UnpackRouteWrapper(): unexpected EOF
-2021/01/07 21:19:10 Failed to unmarshal in UnpackRouteWrapper(): unexpected EOF
-2021/01/07 21:19:10 Failed to unmarshal in UnpackRouteWrapper(): unexpected EOF
-2021/01/07 21:19:10 Failed to unmarshal in UnpackRouteWrapper(): unexpected EOF
-2021/01/07 21:19:10 Failed to unmarshal in UnpackRouteWrapper(): unexpected EOF
-2021/01/07 21:19:10 Failed to unmarshal in UnpackRouteWrapper(): unexpected EOF
-2021/01/07 21:19:10 Failed to unmarshal in UnpackRouteWrapper(): unexpected EOF
-2021/01/07 21:19:10 Failed to unmarshal in UnpackRouteWrapper(): unexpected EOF
-2021/01/07 21:19:10 Failed to unmarshal in UnpackRouteWrapper(): unexpected EOF
-2021/01/07 21:19:10 Failed to unmarshal in UnpackRouteWrapper(): unexpected EOF
-tAnalyzer.GetMostNeedy()
-2021/01/07 21:19:08 Failed to process connection in SwarmTransmuter: Could not retrieve most needy swarm in DataRequestAnalyzer.GetMostNeedy()
-2021/01/07 21:19:08 SwarmGateway.populateActiveQueue(): InactiveQueue is empty
-2021/01/07 21:19:09 SwarmGateway.populateActiveQueue(): InactiveQueue is empty
-2021/01/07 21:19:09 SwarmGateway.populateActiveQueue(): InactiveQueue is empty
-2021/01/07 21:19:09 SwarmGateway.populateActiveQueue(): InactiveQueue is empty
-2021/01/07 21:19:09 SwarmGateway.populateActiveQueue(): InactiveQueue is empty
-2021/01/07 21:19:09 SwarmGateway.populateActiveQueue(): InactiveQueue is empty
-2021/01/07 21:19:09 SwarmGateway.populateActiveQueue(): InactiveQueue is empty
-2021/01/07 21:19:09 SwarmGateway.populateActiveQueue(): InactiveQueue is empty
-2021/01/07 21:19:09 SwarmGateway.populateActiveQueue(): InactiveQueue is empty
-2021/01/07 21:19:09 SwarmGateway.populateActiveQueue(): InactiveQueue is empty
-2021/01/07 21:19:14 Failed to unmarshal in UnpackRouteWrapper(): unexpected EOF
-2021/01/07 21:19:14 Failed to unmarshal in UnpackRouteWrapper(): unexpected EOF
-2021/01/07 21:19:14 Failed to unmarshal in UnpackRouteWrapper(): unexpected EOF
-2021/01/07 21:19:14 Failed to unmarshal in UnpackRouteWrapper(): unexpected EOF
-2021/01/07 21:19:14 Failed to unmarshal in UnpackRouteWrapper(): unexpected EOF
-2021/01/07 21:19:14 Failed to unmarshal in UnpackRouteWrapper(): unexpected EOF
-2021/01/07 21:19:14 Failed to unmarshal in UnpackRouteWrapper(): unexpected EOF
-2021/01/07 21:19:14 Failed to unmarshal in UnpackRouteWrapper(): unexpected EOF
-2021/01/07 21:19:14 Failed to unmarshal in UnpackRouteWrapper(): unexpected EOF
-2021/01/07 21:19:14 Failed to unmarshal in UnpackRouteWrapper(): unexpected EOF
+2021/01/08 17:26:11 SwarmGateway.populateActiveQueue(): InactiveQueue is empty
+2021/01/08 17:26:11 SwarmGateway.populateActiveQueue(): InactiveQueue is empty
+2021/01/08 17:26:11 SwarmGateway.populateActiveQueue(): InactiveQueue is empty
+2021/01/08 17:26:11 SwarmGateway.populateActiveQueue(): InactiveQueue is empty
+2021/01/08 17:26:11 SwarmGateway.populateActiveQueue(): InactiveQueue is empty
+2021/01/08 17:26:11 SwarmGateway.populateActiveQueue(): InactiveQueue is empty
+2021/01/08 17:26:11 SwarmGateway.populateActiveQueue(): InactiveQueue is empty
+2021/01/08 17:26:11 SwarmGateway.populateActiveQueue(): InactiveQueue is empty
+2021/01/08 17:26:12 SwarmGateway.populateActiveQueue(): InactiveQueue is empty
+2021/01/08 17:26:12 SwarmGateway.populateActiveQueue(): InactiveQueue is empty
+2021/01/08 17:26:17 Failed to unmarshal in UnpackRouteWrapper(): unexpected EOF
+2021/01/08 17:26:17 Failed to unmarshal in UnpackRouteWrapper(): unexpected EOF
+2021/01/08 17:26:17 Failed to unmarshal in UnpackRouteWrapper(): unexpected EOF
+2021/01/08 17:26:17 Failed to unmarshal in UnpackRouteWrapper(): unexpected EOF
+2021/01/08 17:26:17 Failed to unmarshal in UnpackRouteWrapper(): unexpected EOF
+2021/01/08 17:26:17 Failed to unmarshal in UnpackRouteWrapper(): unexpected EOF
+2021/01/08 17:26:17 Failed to unmarshal in UnpackRouteWrapper(): unexpected EOF
+2021/01/08 17:26:17 Failed to unmarshal in UnpackRouteWrapper(): unexpected EOF
+2021/01/08 17:26:17 Failed to unmarshal in UnpackRouteWrapper(): unexpected EOF
+2021/01/08 17:26:17 Failed to unmarshal in UnpackRouteWrapper(): unexpected EOF

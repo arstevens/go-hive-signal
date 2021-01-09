@@ -21,7 +21,7 @@ type SwarmGatewayGenerator interface {
 
 //Defines an object that keeps track of swarm sizes
 type SwarmInfoTracker interface {
-	AddPreferredLoadDatapoint(string, int)
+	AddDebriefDatapoint(string, interface{})
 	SetSize(string, int)
 	Delete(string)
 }

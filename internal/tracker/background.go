@@ -7,7 +7,7 @@ import (
 
 var FrequencyCalculationPeriod = time.Minute
 
-func calculateFrequencyOnInterval(trackerSize int, frequencies map[string]*loadEntry, trackers map[string]*swarmLoadTracker,
+func calculateFrequencyOnInterval(trackerSize int, frequencies map[string]*loadEntry, trackers map[string]*SwarmLoadTracker,
 	freqMutex *sync.RWMutex, trackMutex *sync.Mutex) {
 	for {
 		time.Sleep(FrequencyCalculationPeriod)
@@ -17,7 +17,7 @@ func calculateFrequencyOnInterval(trackerSize int, frequencies map[string]*loadE
 		for dataspace, entry := range frequencies {
 			tracker, ok := trackers[dataspace]
 			if !ok {
-				tracker = newLoadTracker(trackerSize)
+				tracker = NewLoadTracker(trackerSize)
 				trackers[dataspace] = tracker
 			}
 			entry.mutex.Lock()
@@ -31,7 +31,7 @@ func calculateFrequencyOnInterval(trackerSize int, frequencies map[string]*loadE
 	}
 }
 
-func cleanup(fmap map[string]*loadEntry, tmap map[string]*swarmLoadTracker) {
+func cleanup(fmap map[string]*loadEntry, tmap map[string]*SwarmLoadTracker) {
 	for dspace, tracker := range tmap {
 		if tracker.CalculateAverageFrequency() == 0 {
 			delete(tmap, dspace)

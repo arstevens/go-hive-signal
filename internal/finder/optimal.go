@@ -20,9 +20,11 @@ func New(tracker SwarmInfoTracker) *OptimalSizeFinder {
 //GetBestSize returns the optimal size for a given swarm
 func (sf *OptimalSizeFinder) GetBestSize(swarmID string) int {
 	swarmLoad := sf.tracker.GetLoad(swarmID)
-	preferredLoadPer := sf.tracker.GetPreferredLoadPerMember(swarmID)
-	if preferredLoadPer == 0 {
-		preferredLoadPer = DefaultPreferredLoad
+	debriefData := sf.tracker.GetDebriefData(swarmID)
+
+	preferredLoadPer := DefaultPreferredLoad
+	if debriefData != nil && debriefData.(int) != 0 {
+		preferredLoadPer = debriefData.(int)
 	}
 	return swarmLoad / preferredLoadPer
 }
