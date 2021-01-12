@@ -8,7 +8,7 @@ import (
 	"github.com/arstevens/go-hive-signal/internal/manager"
 )
 
-var DialEndpoint func(addr string) (manager.Conn, error) = nil
+var DialEndpoint func(addr string) (Conn, error) = nil
 
 type SwarmGateway struct {
 	activeQueue   *activeConnectionQueue

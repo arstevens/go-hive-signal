@@ -9,13 +9,11 @@ import (
 	"strconv"
 	"testing"
 	"time"
-
-	"github.com/arstevens/go-hive-signal/internal/manager"
 )
 
 func TestSwarmGateway(t *testing.T) {
 	fmt.Printf("---------------------------\n    SWARM GATEWAY TEST\n---------------------------\n")
-	DialEndpoint = func(addr string) (manager.Conn, error) {
+	DialEndpoint = func(addr string) (Conn, error) {
 		return &FakeConn{addr: addr, closed: false}, nil
 	}
 	DebriefProcedure = func(conn io.Reader) interface{} {

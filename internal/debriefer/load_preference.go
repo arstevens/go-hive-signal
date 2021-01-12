@@ -8,9 +8,11 @@ import (
 	"github.com/arstevens/go-hive-signal/internal/tracker"
 )
 
-/*LoadPreferenceDebrief reads a single 32-bit integer value from
+var DefaultLoadPreferrenceHistoryLength = 20
+
+/*LoadPreferrenceDebrief reads a single 32-bit integer value from
 a connection that represents the connections preferred load*/
-func LoadPreferenceDebrief(conn io.Reader) interface{} {
+func LoadPreferrenceDebrief(conn io.Reader) interface{} {
 	var debriefValue int32
 	err := binary.Read(conn, binary.BigEndian, &debriefValue)
 	if err != nil {
@@ -27,6 +29,9 @@ type LPSEGenerator struct {
 
 //NewLPSEGenerator returns a new instance of LPSEGenerator
 func NewLPSEGenerator(historyLength int) *LPSEGenerator {
+	if historyLength == 0 {
+		historyLength = DefaultLoadPreferrenceHistoryLength
+	}
 	return &LPSEGenerator{historyLength}
 }
 

@@ -1,0 +1,60 @@
+{
+  "Router": {
+    "LocalizerRoutingCode": 0,
+    "RegistratorRoutingCode": 1,
+    "ConnectorRoutingCode": 2
+  },
+  "Listener": {
+    "PortNumber": 10000
+  },
+  "Messaging": {
+    "MessageEncodingFormat": "protobuf"
+  },
+  "Analyzer": {
+    "SwarmFitCalculationFrequency": 1000
+  },
+  "Cache": {
+    "ConnectionRecordTTL": 60000,
+    "DisconnectionRecordTTL": 60000,
+    "RecordCleanupPeriod": 1000
+  },
+  "Comparator": {
+    "DefaultPreferredLoad": 1
+  },
+  "Connector": {
+    "RequestBufferSize": 30
+  },
+  "Debriefer": {
+    "LoadPreferrenceHistoryLength": 10
+  },
+  "Gateway": {
+    "DialerType": "TCPDialer",
+    "DebriefProcedure": "PreferredLoad",
+    "MaxActiveConnectionsOnStandby": 10
+  },
+  "Localizer": {
+    "RequestBufferSize": 30
+  },
+  "Manager": {
+    "ChangesUntilSizeUpdate": 20
+  },
+  "Negotiator": {
+    "MaxRoundtripsDuringNegotiation": 5
+  },
+  "Register": {
+    "Hostname": "localhost",
+    "Username": "postgres",
+    "Password": "postgres",
+    "PortNumber": 5432
+  },
+  "Registrator": {
+    "RequestBufferSize": 30
+  },
+  "Tracker": {
+    "LoadParameterCalculationFrequency": 60000,
+    "LoadParameterHistorySize": 50
+  },
+  "Transmuter": {
+    "SwarmRestructuringFrequency": 60000
+  }
+}

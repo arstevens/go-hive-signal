@@ -3,15 +3,13 @@ package gateway
 import (
 	"fmt"
 	"io"
-
-	"github.com/arstevens/go-hive-signal/internal/manager"
 )
 
 var DefaultQueueCapacity = 100
 var DebriefProcedure func(io.Reader) interface{} = nil
 
 type activeConnectionQueue struct {
-	queue []manager.Conn
+	queue []Conn
 	head  int
 	tail  int
 	size  int
@@ -23,7 +21,7 @@ func newActiveConnectionQueue(capacity int) *activeConnectionQueue {
 	}
 
 	return &activeConnectionQueue{
-		queue: make([]manager.Conn, capacity),
+		queue: make([]Conn, capacity),
 		head:  0,
 		tail:  0,
 		size:  0,
@@ -49,7 +47,7 @@ func (aq *activeConnectionQueue) Resize(newSize int) error {
 		return nil
 	}
 
-	newQueue := make([]manager.Conn, newSize)
+	newQueue := make([]Conn, newSize)
 	idx := 0
 	for i := aq.head; i != aq.tail; i = (i + 1) % len(aq.queue) {
 		newQueue[idx] = aq.queue[i]
@@ -66,7 +64,7 @@ func (aq *activeConnectionQueue) IsFull() bool {
 	return aq.size == len(aq.queue)
 }
 
-func (aq *activeConnectionQueue) Push(c manager.Conn) error {
+func (aq *activeConnectionQueue) Push(c Conn) error {
 	if aq.IsFull() {
 		return fmt.Errorf("Queue is full in activeConnectionQueue.Push()")
 	}
@@ -76,7 +74,7 @@ func (aq *activeConnectionQueue) Push(c manager.Conn) error {
 	return nil
 }
 
-func (aq *activeConnectionQueue) Pop() (manager.Conn, interface{}) {
+func (aq *activeConnectionQueue) Pop() (Conn, interface{}) {
 	if aq.size == 0 {
 		return nil, -1
 	}

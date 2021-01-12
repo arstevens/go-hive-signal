@@ -7,11 +7,6 @@ import (
 	"github.com/arstevens/go-request/handle"
 )
 
-const (
-	SwarmConnect = iota
-	SwarmDisconnect
-)
-
 const transmuterFailFormat = "Failed to process connection in SwarmTransmuter: %v"
 
 /*SwarmTransmuter handles any commands that result in a change in
@@ -31,8 +26,8 @@ func New(mapper SwarmMap, analyzer SwarmAnalyzer) *SwarmTransmuter {
 }
 
 //ProcessConnection processes a new request identified by 'code'
-func (st *SwarmTransmuter) ProcessConnection(dataspaceID string, code int, conn handle.Conn) error {
-	if code == SwarmConnect {
+func (st *SwarmTransmuter) ProcessConnection(dataspaceID string, swarmConnect bool, conn handle.Conn) error {
+	if swarmConnect {
 		needyID, err := st.analyzer.GetMostNeedy()
 		if err != nil {
 			/*No swarms in need to a new endpoint so drop connection.
@@ -47,15 +42,13 @@ func (st *SwarmTransmuter) ProcessConnection(dataspaceID string, code int, conn 
 		}
 		manager := m.(SwarmManager)
 		manager.AddEndpoint(conn)
-	} else if code == SwarmDisconnect {
+	} else {
 		m, err := st.swarmMap.GetSwarm(dataspaceID)
 		if err != nil {
 			return fmt.Errorf(transmuterFailFormat, err)
 		}
 		manager := m.(SwarmManager)
 		manager.RemoveEndpoint(conn)
-	} else {
-		return fmt.Errorf("Received invalid connection code in SwarmTransmuter")
 	}
 	return nil
 }

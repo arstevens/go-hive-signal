@@ -1,4 +1,4 @@
-package finder
+package comparator
 
 /*SwarmInfoTracker describes an object that has
 information on the actual load parameter of a swarm

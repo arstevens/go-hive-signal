@@ -31,7 +31,7 @@ func TestSwarmTransmuter(t *testing.T) {
 	for i := 0; i < totalConnections; i++ {
 		fc := &FakeConn{id: "/endpoint/" + strconv.Itoa(totalSwarms*endpointsPerSwarm+i)}
 		dspace := "/dataspace/" + strconv.Itoa(rand.Intn(totalSwarms))
-		transmuter.ProcessConnection(dspace, 0, fc)
+		transmuter.ProcessConnection(dspace, true, fc)
 	}
 	printSwarmSizes(smap.managers)
 	time.Sleep(time.Second * 5)

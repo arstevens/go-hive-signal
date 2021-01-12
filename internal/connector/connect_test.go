@@ -55,8 +55,8 @@ func (tv *TestIdentityVerifier) Analyze(ip net.IP, orig string, logon bool) bool
 
 type TestSwarmConnector struct{}
 
-func (tc *TestSwarmConnector) ProcessConnection(id string, code int, conn handle.Conn) error {
-	fmt.Printf("Adding conn with code(%d) to swarm\n", code)
+func (tc *TestSwarmConnector) ProcessConnection(id string, connect bool, conn handle.Conn) error {
+	fmt.Printf("Adding conn with code(%t) to swarm\n", connect)
 	return nil
 }
 

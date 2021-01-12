@@ -9,7 +9,6 @@ import (
 )
 
 var RoundtripLimit = 5
-var HeaderEndian = binary.LittleEndian
 var UnmarshalMessage UnmarshalNegotiateMessage = nil
 
 var readErrorString = "Failed to read message in RoundtripLimitedNegotiate(): %v"
@@ -52,7 +51,7 @@ func RoundtripLimitedNegotiate(offerer manager.Conn, acceptor manager.Conn) erro
 func writeMessageToWire(conn io.Writer, msg []byte) error {
 	var size uint64
 	size = uint64(len(msg))
-	err := binary.Write(conn, HeaderEndian, size)
+	err := binary.Write(conn, binary.BigEndian, size)
 	if err != nil {
 		return fmt.Errorf("Failed to write header to connection: %v", err)
 	}
@@ -66,7 +65,7 @@ func writeMessageToWire(conn io.Writer, msg []byte) error {
 
 func readMessageFromWire(conn io.Reader) ([]byte, error) {
 	var size uint64
-	err := binary.Read(conn, HeaderEndian, &size)
+	err := binary.Read(conn, binary.BigEndian, &size)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to read message header from conn: %v", err)
 	}

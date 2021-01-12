@@ -38,7 +38,7 @@ func writeNResponses(conn io.Writer, n int) {
 			size = uint64(len(resp1))
 		}
 
-		err := binary.Write(conn, HeaderEndian, size)
+		err := binary.Write(conn, binary.BigEndian, size)
 		if err != nil {
 			panic(err)
 		}
@@ -51,7 +51,7 @@ func writeNOffers(conn io.Writer, n int) {
 	var size uint64
 	size = uint64(len(msg))
 	for i := 0; i < n; i++ {
-		err := binary.Write(conn, HeaderEndian, size)
+		err := binary.Write(conn, binary.BigEndian, size)
 		if err != nil {
 			panic(err)
 		}
@@ -65,7 +65,7 @@ func TestMessageRead(t *testing.T) {
 	msg := []byte("this is the message")
 	var size uint64
 	size = uint64(len(msg))
-	err := binary.Write(&conn, HeaderEndian, size)
+	err := binary.Write(&conn, binary.BigEndian, size)
 	if err != nil {
 		panic(err)
 	}

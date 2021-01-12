@@ -79,7 +79,7 @@ func handleConnectionRequest(request ConnectionRequest, conn NetConn,
 		return fmt.Errorf("Identity Verification failed in ConnectionHandler")
 	}
 
-	err := connector.ProcessConnection(request.GetSwarmID(), request.GetRequestCode(), conn)
+	err := connector.ProcessConnection(request.GetSwarmID(), request.IsLogOn(), conn)
 	if err != nil {
 		return fmt.Errorf("Failed to pass request to SwarmConnector in ConnectionHandler: %v", err)
 	}

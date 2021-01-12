@@ -1,20 +1,21 @@
-2021/01/08 17:26:11 SwarmGateway.populateActiveQueue(): InactiveQueue is empty
-2021/01/08 17:26:11 SwarmGateway.populateActiveQueue(): InactiveQueue is empty
-2021/01/08 17:26:11 SwarmGateway.populateActiveQueue(): InactiveQueue is empty
-2021/01/08 17:26:11 SwarmGateway.populateActiveQueue(): InactiveQueue is empty
-2021/01/08 17:26:11 SwarmGateway.populateActiveQueue(): InactiveQueue is empty
-2021/01/08 17:26:11 SwarmGateway.populateActiveQueue(): InactiveQueue is empty
-2021/01/08 17:26:11 SwarmGateway.populateActiveQueue(): InactiveQueue is empty
-2021/01/08 17:26:11 SwarmGateway.populateActiveQueue(): InactiveQueue is empty
-2021/01/08 17:26:12 SwarmGateway.populateActiveQueue(): InactiveQueue is empty
-2021/01/08 17:26:12 SwarmGateway.populateActiveQueue(): InactiveQueue is empty
-2021/01/08 17:26:17 Failed to unmarshal in UnpackRouteWrapper(): unexpected EOF
-2021/01/08 17:26:17 Failed to unmarshal in UnpackRouteWrapper(): unexpected EOF
-2021/01/08 17:26:17 Failed to unmarshal in UnpackRouteWrapper(): unexpected EOF
-2021/01/08 17:26:17 Failed to unmarshal in UnpackRouteWrapper(): unexpected EOF
-2021/01/08 17:26:17 Failed to unmarshal in UnpackRouteWrapper(): unexpected EOF
-2021/01/08 17:26:17 Failed to unmarshal in UnpackRouteWrapper(): unexpected EOF
-2021/01/08 17:26:17 Failed to unmarshal in UnpackRouteWrapper(): unexpected EOF
-2021/01/08 17:26:17 Failed to unmarshal in UnpackRouteWrapper(): unexpected EOF
-2021/01/08 17:26:17 Failed to unmarshal in UnpackRouteWrapper(): unexpected EOF
-2021/01/08 17:26:17 Failed to unmarshal in UnpackRouteWrapper(): unexpected EOF
+2021/01/11 16:57:59 Failed to process connection in SwarmTransmuter: Could not retrieve most needy swarm in DataRequestAnalyzer.GetMostNeedy()
+2021/01/11 16:57:59 SwarmGateway.populateActiveQueue(): InactiveQueue is empty
+2021/01/11 16:57:59 SwarmGateway.populateActiveQueue(): InactiveQueue is empty
+2021/01/11 16:57:59 SwarmGateway.populateActiveQueue(): InactiveQueue is empty
+2021/01/11 16:57:59 SwarmGateway.populateActiveQueue(): InactiveQueue is empty
+2021/01/11 16:57:59 SwarmGateway.populateActiveQueue(): InactiveQueue is empty
+2021/01/11 16:57:59 SwarmGateway.populateActiveQueue(): InactiveQueue is empty
+2021/01/11 16:57:59 SwarmGateway.populateActiveQueue(): InactiveQueue is empty
+2021/01/11 16:57:59 SwarmGateway.populateActiveQueue(): InactiveQueue is empty
+2021/01/11 16:57:59 SwarmGateway.populateActiveQueue(): InactiveQueue is empty
+2021/01/11 16:57:59 SwarmGateway.populateActiveQueue(): InactiveQueue is empty
+2021/01/11 16:58:05 Failed to unmarshal in UnpackRouteWrapper(): unexpected EOF
+2021/01/11 16:58:05 Failed to unmarshal in UnpackRouteWrapper(): unexpected EOF
+2021/01/11 16:58:05 Failed to unmarshal in UnpackRouteWrapper(): unexpected EOF
+2021/01/11 16:58:05 Failed to unmarshal in UnpackRouteWrapper(): unexpected EOF
+2021/01/11 16:58:05 Failed to unmarshal in UnpackRouteWrapper(): unexpected EOF
+2021/01/11 16:58:05 Failed to unmarshal in UnpackRouteWrapper(): unexpected EOF
+2021/01/11 16:58:05 Failed to unmarshal in UnpackRouteWrapper(): unexpected EOF
+2021/01/11 16:58:05 Failed to unmarshal in UnpackRouteWrapper(): unexpected EOF
+2021/01/11 16:58:05 Failed to unmarshal in UnpackRouteWrapper(): unexpected EOF
+2021/01/11 16:58:05 Failed to unmarshal in UnpackRouteWrapper(): unexpected EOF

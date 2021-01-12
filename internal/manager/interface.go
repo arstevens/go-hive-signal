@@ -34,6 +34,5 @@ type AgentNegotiator func(Conn, Conn) error
 //Conn represents a connection to an endpoint
 type Conn interface {
 	GetAddress() string
-	IsClosed() bool
 	io.ReadWriteCloser
 }

@@ -61,8 +61,8 @@ func UnpackRegistrationRequest(raw []byte) (interface{}, error) {
 	return &PBRegistrationRequest{request: &request}, nil
 }
 
-func NewConnectionRequest(isLogOn bool, swarmID string, originID string, requestCode int) ([]byte, error) {
-	request := ConnectionRequest{IsLogOn: isLogOn, SwarmID: swarmID, OriginID: originID, RequestCode: int32(requestCode)}
+func NewConnectionRequest(isLogOn bool, swarmID string, originID string) ([]byte, error) {
+	request := ConnectionRequest{IsLogOn: isLogOn, SwarmID: swarmID, OriginID: originID}
 	raw, err := proto.Marshal(&request)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to create ConnectionRequest in NewConnectionRequest(): %v", err)

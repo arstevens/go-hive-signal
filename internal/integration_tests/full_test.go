@@ -10,9 +10,9 @@ import (
 
 	"github.com/arstevens/go-hive-signal/internal/analyzer"
 	"github.com/arstevens/go-hive-signal/internal/cache"
+	"github.com/arstevens/go-hive-signal/internal/comparator"
 	"github.com/arstevens/go-hive-signal/internal/connector"
 	"github.com/arstevens/go-hive-signal/internal/debriefer"
-	"github.com/arstevens/go-hive-signal/internal/finder"
 	"github.com/arstevens/go-hive-signal/internal/gateway"
 	"github.com/arstevens/go-hive-signal/internal/localizer"
 	"github.com/arstevens/go-hive-signal/internal/manager"
@@ -91,7 +91,7 @@ func TestRequestLocalizerSubtree(t *testing.T) {
 	analyzer.DistancePollTime = time.Millisecond * 10
 	tracker.FrequencyCalculationPeriod = time.Second //time.Millisecond * 50
 	transmuter.PollPeriod = time.Second
-	gateway.DialEndpoint = func(addr string) (manager.Conn, error) {
+	gateway.DialEndpoint = func(addr string) (gateway.Conn, error) {
 		return &FakeConn{
 			addr:   addr,
 			closed: false,
@@ -113,11 +113,11 @@ func TestRequestLocalizerSubtree(t *testing.T) {
 	historyLength := 10
 	engineGenerator := debriefer.NewLPSEGenerator(historyLength)
 	infoTracker := tracker.New(engineGenerator, historyLength)
-	optimalFinder := finder.New(infoTracker)
+	optimalFinder := comparator.New(infoTracker)
 
 	activeSize := 10
 	inactiveSize := 20
-	gateway.DebriefProcedure = debriefer.LoadPreferenceDebrief
+	gateway.DebriefProcedure = debriefer.LoadPreferrenceDebrief
 	gatewayGen := gateway.NewGenerator(activeSize, inactiveSize)
 	managerGen := manager.NewGenerator(gatewayGen, negotiate, infoTracker)
 
@@ -216,7 +216,7 @@ func TestRequestLocalizerSubtree(t *testing.T) {
 			if rand.Intn(outOf) < newEndpointFrequencyLimit { //Add new endpoint
 				dataspace := dataspaces[rand.Intn(totalDataspaces)]
 				connectionRequest, err := protomsg.NewConnectionRequest(true, dataspace,
-					origins[0], transmuter.SwarmConnect)
+					origins[0])
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -241,7 +241,7 @@ func TestRequestLocalizerSubtree(t *testing.T) {
 				}
 
 				disconnectionRequest, err := protomsg.NewConnectionRequest(false, dataspace,
-					origins[0], transmuter.SwarmDisconnect)
+					origins[0])
 				if err != nil {
 					t.Fatal(err)
 				}

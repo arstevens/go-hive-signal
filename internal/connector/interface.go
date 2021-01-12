@@ -16,13 +16,12 @@ type IdentityVerifier interface {
 //SwarmConnector connects a connection to a swarm
 type SwarmConnector interface {
 	// SwarmID if exists, Connection code, connection object to requester
-	ProcessConnection(string, int, handle.Conn) error
+	ProcessConnection(string, bool, handle.Conn) error
 }
 
 /*ConnectionRequest is the request type that a
 ConnectionHandler can process*/
 type ConnectionRequest interface {
-	GetRequestCode() int
 	GetSwarmID() string
 	GetOriginID() string
 	IsLogOn() bool

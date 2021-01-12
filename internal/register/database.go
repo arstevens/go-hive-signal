@@ -13,10 +13,10 @@ var (
 	Port     = 5432
 	User     = "postgres"
 	Password = "postgres"
-	DBName   = "p2p_cdn"
 )
 
 const (
+	dbName          = "p2p_cdn"
 	tableName       = "registered_origins"
 	fieldName       = "origin_id"
 	insertStatement = "INSERT INTO " + tableName + " (" + fieldName + ") VALUES ($1)"
@@ -35,20 +35,20 @@ type EndpointRegistrationDatabase struct {
 func New() (*EndpointRegistrationDatabase, error) {
 	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s "+
 		"password=%s dbname=%s sslmode=disable",
-		Host, Port, User, Password, DBName)
+		Host, Port, User, Password, dbName)
 
 	db, err := sql.Open("postgres", psqlInfo)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to open databse %s in New()", DBName)
+		return nil, fmt.Errorf("Failed to open databse %s in New()", dbName)
 	}
 	err = db.Ping()
 	if err != nil {
-		return nil, fmt.Errorf("Failed to open connection to databse %s in New()", DBName)
+		return nil, fmt.Errorf("Failed to open connection to databse %s in New()", dbName)
 	}
 
 	inMemory, err := loadDatabaseIntoMemory(db)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to read database %s into memory in New()", DBName)
+		return nil, fmt.Errorf("Failed to read database %s into memory in New()", dbName)
 	}
 
 	return &EndpointRegistrationDatabase{

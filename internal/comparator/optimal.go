@@ -1,4 +1,4 @@
-package finder
+package comparator
 
 var DefaultPreferredLoad = 1
 

@@ -42,7 +42,7 @@ func TestProtomsg(t *testing.T) {
 
 	fmt.Printf("Testing ConnectionRequest\n")
 	fmt.Printf("\tcreating new request...")
-	cRequest, err := NewConnectionRequest(true, "/swarm/TEST", "/origin/TEST", 1)
+	cRequest, err := NewConnectionRequest(true, "/swarm/TEST", "/origin/TEST")
 	if err != nil {
 		fmt.Printf("failed\n")
 		panic(err)

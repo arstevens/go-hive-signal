@@ -12,10 +12,9 @@ message RegistrationRequest {
 }
 
 message ConnectionRequest {
-  int32 requestCode = 1;
-  bool isLogOn = 2;
-  string swarmID = 3;
-  string originID = 4;
+  bool isLogOn = 1;
+  string swarmID = 2;
+  string originID = 3;
 }
 
 message RouterWrapper {
@@ -25,5 +24,6 @@ message RouterWrapper {
 
 message NegotiateMessage {
   bool isAccepted = 1;
+  bytes messageData = 2;
   //Extra fields that will be used by negotiating parties
 }

@@ -36,10 +36,6 @@ func (cr *PBConnectionRequest) IsLogOn() bool {
 	return cr.request.GetIsLogOn()
 }
 
-func (cr *PBConnectionRequest) GetRequestCode() int {
-	return int(cr.request.GetRequestCode())
-}
-
 func (cr *PBConnectionRequest) GetSwarmID() string {
 	return cr.request.GetSwarmID()
 }

@@ -9,7 +9,6 @@ import (
 
 var ChangeTriggerLimit int = 20
 var OperationSuccess byte = 1
-var MessageEndian = binary.LittleEndian
 
 /*SwarmManager is an object that can be used to connect new requesters
 to a peer-to-peer swarm*/
@@ -87,7 +86,7 @@ func (sm *SwarmManager) AddEndpoint(c interface{}) error {
 	}
 	sm.incrementChanges()
 
-	err = binary.Write(conn, MessageEndian, OperationSuccess)
+	err = binary.Write(conn, binary.BigEndian, OperationSuccess)
 	if err != nil {
 		return fmt.Errorf("Failed to communicate endpoint addition in SwarmManager.AddEndpoint(): %v", err)
 	}

@@ -19,6 +19,12 @@ type NetListener struct {
 	listener net.Listener
 }
 
+func NewNetListener(listener net.Listener) *NetListener {
+	return &NetListener{
+		listener: listener,
+	}
+}
+
 // Accept returns a net.Conn wrapped as a NetConn and an error
 func (nl *NetListener) Accept() (handle.Conn, error) {
 	nConn, err := nl.listener.Accept()
