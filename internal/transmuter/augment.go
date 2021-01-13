@@ -54,14 +54,9 @@ func transmuteSwarms(swarmMap SwarmMap, candidates []Candidate) error {
 			return fmt.Errorf("Failed to retrieve transferee SwarmManager of dataspace %s in SwarmTransmuter daemon: %v", transfererID, err)
 		}
 		transferee := t.(SwarmManager)
-
-		endpoints := transferer.GetEndpoints()
-		for i := 0; i < len(endpoints) && i < transferSize; i++ {
-			err = transferee.TakeEndpoint(endpoints[i])
-			if err != nil {
-				return fmt.Errorf("Failed to transfer endpoint %s in SwarmTransmuter daemon: %v", endpoints[i], err)
-			}
-			transferer.DropEndpoint(endpoints[i])
+		err = transferer.Transfer(transferSize, transferee)
+		if err != nil {
+			return fmt.Errorf("Failed to transfer endpoints in SwarmTransmuter daemon: %v", err)
 		}
 	}
 	return nil

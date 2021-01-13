@@ -3,23 +3,25 @@ package manager
 import (
 	"encoding/binary"
 	"fmt"
+	"io"
 	"log"
-	"sync"
+
+	"github.com/arstevens/go-hive-signal/internal/transmuter"
 )
 
 var ChangeTriggerLimit int = 20
 var OperationSuccess byte = 1
+var DebriefProcedure func(io.Reader) interface{} = nil
 
 /*SwarmManager is an object that can be used to connect new requesters
 to a peer-to-peer swarm*/
 type SwarmManager struct {
-	gateway     SwarmGateway
-	gatewayLock *sync.Mutex
-	negotiate   AgentNegotiator
-	tracker     SwarmInfoTracker
-	closed      bool
-	id          string
-	changes     int
+	gateway   SwarmGateway
+	negotiate AgentNegotiator
+	tracker   SwarmInfoTracker
+	closed    bool
+	id        string
+	changes   int
 }
 
 //New creates a new SwarmManager
@@ -45,11 +47,15 @@ func (sm *SwarmManager) AttemptToPair(conn interface{}) error {
 	if !ok {
 		return fmt.Errorf("Failed to pair in SwarmManager.AttemptToPair(). 'conn' does not conform to Conn interface")
 	}
-	offerer, debrief, err := sm.gateway.GetEndpoint()
+	defer acceptorConn.Close()
+
+	offerer, err := sm.gateway.GetEndpoint()
 	if err != nil {
 		log.Printf("Failed to pair in SwarmManager.AttemptToPair(): %v", err)
 		return nil
 	}
+
+	debrief := DebriefProcedure(offerer)
 	if debrief != nil {
 		sm.tracker.AddDebriefDatapoint(sm.id, debrief)
 	}
@@ -57,6 +63,10 @@ func (sm *SwarmManager) AttemptToPair(conn interface{}) error {
 	offererConn, ok := offerer.(Conn)
 	if !ok {
 		return fmt.Errorf("Failed to pair in SwarmManager.AttemptToPair(). offerer 'conn' does not conform to Conn interface")
+	}
+	err = sm.gateway.PushEndpoint(offererConn)
+	if err != nil {
+		log.Printf("Failed to push endpoint back to queue in SwarmManager.AttemptToPair(): %v", err)
 	}
 
 	err = sm.negotiate(offererConn, acceptorConn)
@@ -79,8 +89,7 @@ func (sm *SwarmManager) AddEndpoint(c interface{}) error {
 	}
 
 	//Add new endpoint to the gateway structure
-	addr := conn.GetAddress()
-	err = sm.gateway.PushEndpoint(addr)
+	err = sm.gateway.PushEndpoint(conn)
 	if err != nil {
 		return fmt.Errorf("Failed to add endpoint in SwarmManager.AddEndpoint(): %v", err)
 	}
@@ -93,23 +102,30 @@ func (sm *SwarmManager) AddEndpoint(c interface{}) error {
 	return nil
 }
 
-//TakeEndpoint adds the 'addr' to the backlog of endpoints for the swarm
-func (sm *SwarmManager) TakeEndpoint(addr string) error {
-	err := sm.gateway.PushEndpoint(addr)
-	if err != nil {
-		return fmt.Errorf("Failed to take endpoint in SwarmManager.TakeEndpoint(): %v", err)
+func (sm *SwarmManager) Transfer(tsize int, m transmuter.SwarmManager) error {
+	smallManager := m.(*SwarmManager)
+	for i := 0; i < tsize; i++ {
+		conn, err := sm.gateway.GetEndpoint()
+		if err != nil {
+			return fmt.Errorf("Failed to transfer endpoints in SwarmManager.Transfer(): %v", err)
+		}
+		err = smallManager.gateway.PushEndpoint(conn)
+		if err != nil {
+			return fmt.Errorf("Failed to transfer endpoints in SwarmManager.Transfer(): %v", err)
+		}
 	}
-	sm.incrementChanges()
 	return nil
 }
 
 func (sm *SwarmManager) connectForContextRetrieval(conn Conn) error {
-	offerer, debrief, err := sm.gateway.GetEndpoint()
+	offerer, err := sm.gateway.GetEndpoint()
 	if err != nil {
 		/*If there was an error getting an endpoint thats because the swarm is
 		empty and therefore there is no context to retrieve*/
 		return nil
 	}
+
+	debrief := DebriefProcedure(offerer)
 	if debrief != nil {
 		sm.tracker.AddDebriefDatapoint(sm.id, debrief)
 	}
@@ -124,40 +140,13 @@ func (sm *SwarmManager) connectForContextRetrieval(conn Conn) error {
 	return nil
 }
 
-//RemoveEndpoint removes the connection 'c' from the swarm
-func (sm *SwarmManager) RemoveEndpoint(c interface{}) error {
-	conn, ok := c.(Conn)
-	if !ok {
-		return fmt.Errorf("Failed to add endpoint in SwarmManager.RemoveEndpoint(): parameter of wrong type")
-	}
-
-	addr := conn.GetAddress()
-	err := sm.gateway.RemoveEndpoint(addr)
-	if err != nil {
-		return fmt.Errorf("Failed to add endpoint in SwarmManager.RemoveEndpoint(): %v", err)
-	}
-	sm.incrementChanges()
-	return nil
-}
-
-//DropEndpoint removes 'addr' from the backlog of endpoints in the swarm
-func (sm *SwarmManager) DropEndpoint(addr string) error {
-	err := sm.gateway.RemoveEndpoint(addr)
-	if err != nil {
-		return fmt.Errorf("Failed to drop endpoint in SwarmManager.DropEndpoint(): %v", err)
-	}
-	sm.incrementChanges()
-	return nil
-}
-
-//GetEndpoints returns a slice of all endpoint addresses
-func (sm *SwarmManager) GetEndpoints() []string {
-	return sm.gateway.GetEndpointAddrs()
-}
-
 //GetID returns the swarm ID associated with this manager
 func (sm *SwarmManager) GetID() string {
 	return sm.id
+}
+
+func (sm *SwarmManager) GetSize() int {
+	return sm.gateway.GetTotalEndpoints()
 }
 
 //Close closes the SwarmManager for use

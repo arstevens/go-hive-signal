@@ -8,8 +8,6 @@ import (
 	"github.com/arstevens/go-hive-signal/internal/cache"
 	"github.com/arstevens/go-hive-signal/internal/comparator"
 	"github.com/arstevens/go-hive-signal/internal/debriefer"
-	"github.com/arstevens/go-hive-signal/internal/dialer"
-	"github.com/arstevens/go-hive-signal/internal/gateway"
 	"github.com/arstevens/go-hive-signal/internal/manager"
 	"github.com/arstevens/go-hive-signal/internal/negotiator"
 	"github.com/arstevens/go-hive-signal/internal/register"
@@ -29,8 +27,7 @@ var (
 	registratorQueueSize = 30
 	localizerQueueSize   = 30
 
-	gatewayActiveQueueSize   = 0
-	gatewayInactiveQueueSize = 20
+	gatewayActiveQueueSize = 0
 
 	trackerLoadHistorySize   = 0
 	debrieferLoadHistorySize = 0
@@ -196,35 +193,7 @@ func ConfigureComparator(config map[string]interface{}) {
 }
 
 func ConfigureGateway(config map[string]interface{}) {
-	DialEndpointKey := "DialerType"
-	DebriefProcedureKey := "DebriefProcedure"
 	DefaultQueueCapacityKey := "MaxActiveConnectionsOnStandby"
-
-	if de, ok := config[DialEndpointKey]; ok {
-		TCPDialerOption := "TCPDialer"
-
-		dialEndpoint := de.(string)
-		if dialEndpoint == TCPDialerOption {
-			gateway.DialEndpoint = dialer.TCPDialEndpoint
-		} else {
-			log.Fatalf(InvalidOptionError, dialEndpoint, DialEndpointKey)
-		}
-	} else {
-		log.Fatalf(MissingSettingError, DialEndpointKey)
-	}
-
-	if dp, ok := config[DebriefProcedureKey]; ok {
-		PreferredLoadOption := "PreferredLoad"
-
-		debriefProcedure := dp.(string)
-		if debriefProcedure == PreferredLoadOption {
-			gateway.DebriefProcedure = debriefer.LoadPreferrenceDebrief
-		} else {
-			log.Fatalf(InvalidOptionError, debriefProcedure, DebriefProcedureKey)
-		}
-	} else {
-		log.Fatalf(MissingSettingError, DebriefProcedureKey)
-	}
 
 	if dq, ok := config[DefaultQueueCapacityKey]; ok {
 		gatewayActiveQueueSize = int(dq.(float64))
@@ -233,6 +202,20 @@ func ConfigureGateway(config map[string]interface{}) {
 
 func ConfigureManager(config map[string]interface{}) {
 	ChangeTriggerLimitKey := "ChangesUntilSizeUpdate"
+	DebriefProcedureKey := "DebriefProcedure"
+
+	if dp, ok := config[DebriefProcedureKey]; ok {
+		PreferredLoadOption := "PreferredLoad"
+
+		debriefProcedure := dp.(string)
+		if debriefProcedure == PreferredLoadOption {
+			manager.DebriefProcedure = debriefer.LoadPreferrenceDebrief
+		} else {
+			log.Fatalf(InvalidOptionError, debriefProcedure, DebriefProcedureKey)
+		}
+	} else {
+		log.Fatalf(MissingSettingError, DebriefProcedureKey)
+	}
 
 	if ctl, ok := config[ChangeTriggerLimitKey]; ok {
 		manager.ChangeTriggerLimit = int(ctl.(float64))

@@ -24,6 +24,7 @@ import (
 	"github.com/arstevens/go-hive-signal/internal/tracker"
 	"github.com/arstevens/go-hive-signal/internal/transmuter"
 	"github.com/arstevens/go-hive-signal/internal/verifier"
+	"github.com/arstevens/go-hive-signal/internal/wrapper"
 	"github.com/arstevens/go-request/handle"
 	"github.com/arstevens/go-request/route"
 )
@@ -39,7 +40,7 @@ func LinkProgram() (func(), error) {
 	identityVerifier := verifier.New(endpointRegister, connectionCache)
 
 	lpseGenerator := debriefer.NewLPSEGenerator(debrieferLoadHistorySize)
-	gatewayGenerator := gateway.NewGenerator(gatewayActiveQueueSize, gatewayInactiveQueueSize)
+	gatewayGenerator := gateway.NewGenerator(gatewayActiveQueueSize)
 	infoTracker := tracker.New(lpseGenerator, trackerLoadHistorySize)
 	managerGenerator := manager.NewGenerator(gatewayGenerator, negotiator.RoundtripLimitedNegotiate,
 		infoTracker)
@@ -68,7 +69,7 @@ func LinkProgram() (func(), error) {
 	if err != nil {
 		return nil, fmt.Errorf("Failed to link program in configuration.LinkProgram(): %v", err)
 	}
-	routeListener := route.NewNetListener(netListener)
+	routeListener := wrapper.NewNetListener(netListener)
 
 	return func() {
 		done := make(chan struct{})

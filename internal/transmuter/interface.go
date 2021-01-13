@@ -26,9 +26,6 @@ type Candidate interface {
 
 type SwarmManager interface {
 	AddEndpoint(interface{}) error
-	RemoveEndpoint(interface{}) error
-	TakeEndpoint(string) error
-	DropEndpoint(string) error
-	GetEndpoints() []string
+	Transfer(int, SwarmManager) error
 	io.Closer
 }

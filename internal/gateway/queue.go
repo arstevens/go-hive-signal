@@ -2,11 +2,9 @@ package gateway
 
 import (
 	"fmt"
-	"io"
 )
 
-var DefaultQueueCapacity = 100
-var DebriefProcedure func(io.Reader) interface{} = nil
+var DefaultQueueCapacity = 10000
 
 type activeConnectionQueue struct {
 	queue []Conn
@@ -48,11 +46,11 @@ func (aq *activeConnectionQueue) Resize(newSize int) error {
 	}
 
 	newQueue := make([]Conn, newSize)
-	idx := 0
-	for i := aq.head; i != aq.tail; i = (i + 1) % len(aq.queue) {
-		newQueue[idx] = aq.queue[i]
-		aq.queue[i] = nil
-		idx++
+	j := aq.head
+	for i := 0; i < aq.size; i++ {
+		newQueue[i] = aq.queue[j]
+		aq.queue[j] = nil
+		j = (aq.head + 1 + i) % len(aq.queue)
 	}
 	aq.queue = newQueue
 	aq.head = 0
@@ -66,7 +64,10 @@ func (aq *activeConnectionQueue) IsFull() bool {
 
 func (aq *activeConnectionQueue) Push(c Conn) error {
 	if aq.IsFull() {
-		return fmt.Errorf("Queue is full in activeConnectionQueue.Push()")
+		err := aq.Resize(len(aq.queue) * 2)
+		if err != nil {
+			return fmt.Errorf("Queue is full in activeConnectionQueue.Push(): %v", err)
+		}
 	}
 	aq.queue[aq.tail] = c
 	aq.tail = (aq.tail + 1) % len(aq.queue)
@@ -74,17 +75,15 @@ func (aq *activeConnectionQueue) Push(c Conn) error {
 	return nil
 }
 
-func (aq *activeConnectionQueue) Pop() (Conn, interface{}) {
+func (aq *activeConnectionQueue) Pop() Conn {
 	if aq.size == 0 {
-		return nil, -1
+		return nil
 	}
 
 	c := aq.queue[aq.head]
-	debriefVal := DebriefProcedure(c)
-
 	aq.queue[aq.head] = nil
 	aq.head = (aq.head + 1) % len(aq.queue)
 	aq.size--
 
-	return c, debriefVal
+	return c
 }

@@ -2,12 +2,14 @@ package manager
 
 import (
 	"fmt"
+	"io"
 	"math/rand"
 	"strconv"
 	"testing"
 )
 
 func TestManager(t *testing.T) {
+	DebriefProcedure = func(io.Reader) interface{} { return rand.Intn(95) + 5 }
 	tracker := &testSwarmTracker{m: make(map[string]int)}
 	totalSwarms := 10
 	swarms := make([]*SwarmManager, totalSwarms)
@@ -27,18 +29,6 @@ func TestManager(t *testing.T) {
 			t.Fatalf("Failed to run pair: %v\n", err)
 		}
 		err = swarms[i].AddEndpoint(&FakeConn{})
-		if err != nil {
-			panic(err)
-		}
-		err = swarms[i].RemoveEndpoint(&FakeConn{})
-		if err != nil {
-			panic(err)
-		}
-		err = swarms[i].TakeEndpoint("")
-		if err != nil {
-			panic(err)
-		}
-		err = swarms[i].DropEndpoint("")
 		if err != nil {
 			panic(err)
 		}
@@ -64,10 +54,10 @@ type testSwarmGateway struct {
 	totalEndpoints int
 }
 
-func (sg *testSwarmGateway) GetEndpoint() (Conn, interface{}, error) {
-	return sg.conn, rand.Intn(95) + 5, nil
+func (sg *testSwarmGateway) GetEndpoint() (Conn, error) {
+	return sg.conn, nil
 }
-func (sg *testSwarmGateway) PushEndpoint(string) error {
+func (sg *testSwarmGateway) PushEndpoint(Conn) error {
 	sg.totalEndpoints++
 	return nil
 }

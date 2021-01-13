@@ -42,13 +42,6 @@ func (st *SwarmTransmuter) ProcessConnection(dataspaceID string, swarmConnect bo
 		}
 		manager := m.(SwarmManager)
 		manager.AddEndpoint(conn)
-	} else {
-		m, err := st.swarmMap.GetSwarm(dataspaceID)
-		if err != nil {
-			return fmt.Errorf(transmuterFailFormat, err)
-		}
-		manager := m.(SwarmManager)
-		manager.RemoveEndpoint(conn)
 	}
 	return nil
 }

@@ -42,7 +42,8 @@ func printSwarmSizes(m map[string]SwarmManager) {
 	fmt.Printf("\n---------------------------------\n")
 	for id, manager := range m {
 		fmt.Printf("Swarm: %s\n", id)
-		endpoints := manager.GetEndpoints()
+		m := manager.(*TestSwarmManager)
+		endpoints := m.GetEndpoints()
 		for _, endpoint := range endpoints {
 			fmt.Printf("\t%s\n", endpoint)
 		}
@@ -134,6 +135,16 @@ func (sm *TestSwarmManager) DropEndpoint(s string) error {
 	}
 	return nil
 }
+
+func (sm *TestSwarmManager) Transfer(size int, man2 SwarmManager) error {
+	man := man2.(*TestSwarmManager)
+	for i := 0; len(sm.endpoints) > 0 && i < size; i++ {
+		man.endpoints = append(man.endpoints, sm.endpoints[0])
+		sm.endpoints = sm.endpoints[1:]
+	}
+	return nil
+}
+
 func (sm *TestSwarmManager) GetEndpoints() []string {
 	return sm.endpoints
 }

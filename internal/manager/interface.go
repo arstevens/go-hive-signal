@@ -5,12 +5,10 @@ import "io"
 /*SwarmGateway returns a connection object to an endpoint
 in a designated swarm*/
 type SwarmGateway interface {
-	PushEndpoint(string) error
-	RemoveEndpoint(string) error
+	PushEndpoint(Conn) error
 	//Returns the connection, a debrief object, and an error
-	GetEndpoint() (Conn, interface{}, error)
+	GetEndpoint() (Conn, error)
 	GetTotalEndpoints() int
-	GetEndpointAddrs() []string
 	io.Closer
 }
 

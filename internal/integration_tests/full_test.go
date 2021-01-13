@@ -91,12 +91,6 @@ func TestRequestLocalizerSubtree(t *testing.T) {
 	analyzer.DistancePollTime = time.Millisecond * 10
 	tracker.FrequencyCalculationPeriod = time.Second //time.Millisecond * 50
 	transmuter.PollPeriod = time.Second
-	gateway.DialEndpoint = func(addr string) (gateway.Conn, error) {
-		return &FakeConn{
-			addr:   addr,
-			closed: false,
-		}, nil
-	}
 	negotiate := func(a manager.Conn, b manager.Conn) error { return nil }
 
 	logName := "test.log"
@@ -116,9 +110,8 @@ func TestRequestLocalizerSubtree(t *testing.T) {
 	optimalFinder := comparator.New(infoTracker)
 
 	activeSize := 10
-	inactiveSize := 20
-	gateway.DebriefProcedure = debriefer.LoadPreferrenceDebrief
-	gatewayGen := gateway.NewGenerator(activeSize, inactiveSize)
+	manager.DebriefProcedure = debriefer.LoadPreferrenceDebrief
+	gatewayGen := gateway.NewGenerator(activeSize)
 	managerGen := manager.NewGenerator(gatewayGen, negotiate, infoTracker)
 
 	swarmMap := mapper.New(managerGen)
@@ -205,7 +198,7 @@ func TestRequestLocalizerSubtree(t *testing.T) {
 	transmutationIterations := int(totalRuntime / transmutationFrequency)
 
 	fmt.Printf("Starting endpoint additions...\n")
-	newEndpointFrequency := 0.75
+	newEndpointFrequency := 1.0
 	go func() {
 		defer close(transDone)
 		outOf := 100
@@ -300,7 +293,7 @@ func TestRequestLocalizerSubtree(t *testing.T) {
 		tsize := infoTracker.GetSize(dspace)
 		m, _ := swarmMap.GetSwarm(dspace)
 		man := m.(*manager.SwarmManager)
-		size := len(man.GetEndpoints())
+		size := man.GetSize()
 		fmt.Printf("\t%s Load->%d TSize->%d Size->%d\n", dspace, load, tsize, size)
 	}
 

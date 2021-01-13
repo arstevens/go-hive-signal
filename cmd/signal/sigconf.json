@@ -28,14 +28,13 @@
     "LoadPreferrenceHistoryLength": 10
   },
   "Gateway": {
-    "DialerType": "TCPDialer",
-    "DebriefProcedure": "PreferredLoad",
-    "MaxActiveConnectionsOnStandby": 10
+    "MaxActiveConnectionsOnStandby": 10000
   },
   "Localizer": {
     "RequestBufferSize": 30
   },
   "Manager": {
+    "DebriefProcedure": "PreferredLoad",
     "ChangesUntilSizeUpdate": 20
   },
   "Negotiator": {
