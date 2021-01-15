@@ -1,4 +1,4 @@
-# github.com/arstevens/go-request v0.0.0-20210111043138-dca6cc61819c
+# github.com/arstevens/go-request v0.0.0-20210113024511-211044dbad9a
 ## explicit
 github.com/arstevens/go-request/handle
 github.com/arstevens/go-request/route

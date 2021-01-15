@@ -47,8 +47,8 @@ func RoundtripLimitedNegotiate(offerer manager.Conn, acceptor manager.Conn) erro
 }
 
 func writeMessageToWire(conn io.Writer, msg []byte) error {
-	var size int64
-	size = int64(len(msg))
+	var size int32
+	size = int32(len(msg))
 	err := binary.Write(conn, binary.BigEndian, size)
 	if err != nil {
 		return fmt.Errorf("Failed to write header to connection: %v", err)
@@ -62,7 +62,7 @@ func writeMessageToWire(conn io.Writer, msg []byte) error {
 }
 
 func readMessageFromWire(conn io.Reader) ([]byte, error) {
-	var size int64
+	var size int32
 	err := binary.Read(conn, binary.BigEndian, &size)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to read message header from conn: %v", err)

@@ -79,6 +79,15 @@ func UnpackConnectionRequest(raw []byte) (interface{}, error) {
 	return &PBConnectionRequest{request: &request}, nil
 }
 
+func NewNegotiateMessage(accepted bool, data []byte) ([]byte, error) {
+	request := NegotiateMessage{IsAccepted: accepted, MessageData: data}
+	raw, err := proto.Marshal(&request)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to create NegotiateRequest in NewNegotiateRequest(): %v", err)
+	}
+	return raw, nil
+}
+
 func UnmarshalNegotiateMessage(raw []byte) (interface{}, error) {
 	var msg NegotiateMessage
 	err := proto.Unmarshal(raw, &msg)
